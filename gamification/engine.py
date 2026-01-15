@@ -1,0 +1,158 @@
+"""Gamification Engine - XP, Levels, Achievements"""
+import json
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
+from .models import UserProgress
+
+DATA_FILE = Path(__file__).parent.parent / "data" / "user_progress.json"
+
+# Achievement definitions
+ACHIEVEMENTS = {
+    "first_quiz": {"name": "Quiz Novice", "desc": "Complete your first quiz", "icon": "📚"},
+    "quiz_master": {"name": "Quiz Master", "desc": "Get 100% on a quiz", "icon": "🎓"},
+    "quest_starter": {"name": "Quest Starter", "desc": "Complete your first quest", "icon": "⚔️"},
+    "quest_slayer": {"name": "Quest Slayer", "desc": "Complete 10 quests", "icon": "🗡️"},
+    "code_warrior": {"name": "Code Warrior", "desc": "Solve your first challenge", "icon": "💻"},
+    "code_legend": {"name": "Code Legend", "desc": "Solve 10 challenges", "icon": "🏆"},
+    "streak_3": {"name": "On Fire", "desc": "3 day streak", "icon": "🔥"},
+    "streak_7": {"name": "Unstoppable", "desc": "7 day streak", "icon": "⚡"},
+    "level_5": {"name": "Rising Star", "desc": "Reach level 5", "icon": "⭐"},
+    "level_10": {"name": "Champion", "desc": "Reach level 10", "icon": "👑"},
+}
+
+def calculate_level(xp: int) -> int:
+    """Calculate level from XP (100 XP per level)"""
+    return (xp // 100) + 1
+
+def xp_for_next_level(current_xp: int) -> int:
+    """XP needed for next level"""
+    current_level = calculate_level(current_xp)
+    return (current_level * 100) - current_xp
+
+def load_progress() -> UserProgress:
+    """Load user progress from file"""
+    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    if DATA_FILE.exists():
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+            return UserProgress(**data)
+    return UserProgress()
+
+def save_progress(progress: UserProgress) -> None:
+    """Save user progress to file"""
+    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(DATA_FILE, "w") as f:
+        json.dump(progress.model_dump(), f, indent=2)
+
+def add_xp(amount: int, reason: str = "") -> dict:
+    """Add XP and check for level ups and achievements"""
+    progress = load_progress()
+    old_level = progress.level
+    
+    progress.xp += amount
+    progress.level = calculate_level(progress.xp)
+    
+    # Check streak
+    today = datetime.now().strftime("%Y-%m-%d")
+    if progress.last_active:
+        last = datetime.strptime(progress.last_active, "%Y-%m-%d")
+        diff = (datetime.now() - last).days
+        if diff == 1:
+            progress.streak_days += 1
+        elif diff > 1:
+            progress.streak_days = 1
+    else:
+        progress.streak_days = 1
+    progress.last_active = today
+    
+    # Check achievements
+    new_achievements = []
+    
+    if progress.streak_days >= 3 and "streak_3" not in progress.achievements:
+        progress.achievements.append("streak_3")
+        new_achievements.append(ACHIEVEMENTS["streak_3"])
+    
+    if progress.streak_days >= 7 and "streak_7" not in progress.achievements:
+        progress.achievements.append("streak_7")
+        new_achievements.append(ACHIEVEMENTS["streak_7"])
+    
+    if progress.level >= 5 and "level_5" not in progress.achievements:
+        progress.achievements.append("level_5")
+        new_achievements.append(ACHIEVEMENTS["level_5"])
+    
+    if progress.level >= 10 and "level_10" not in progress.achievements:
+        progress.achievements.append("level_10")
+        new_achievements.append(ACHIEVEMENTS["level_10"])
+    
+    save_progress(progress)
+    
+    leveled_up = progress.level > old_level
+    
+    return {
+        "xp_gained": amount,
+        "total_xp": progress.xp,
+        "level": progress.level,
+        "leveled_up": leveled_up,
+        "xp_to_next": xp_for_next_level(progress.xp),
+        "streak": progress.streak_days,
+        "new_achievements": new_achievements
+    }
+
+def unlock_achievement(achievement_id: str) -> Optional[dict]:
+    """Unlock a specific achievement"""
+    if achievement_id not in ACHIEVEMENTS:
+        return None
+    
+    progress = load_progress()
+    if achievement_id in progress.achievements:
+        return None
+    
+    progress.achievements.append(achievement_id)
+    save_progress(progress)
+    
+    return ACHIEVEMENTS[achievement_id]
+
+def get_stats() -> dict:
+    """Get current user stats for dashboard"""
+    progress = load_progress()
+    
+    return {
+        "xp": progress.xp,
+        "level": progress.level,
+        "xp_to_next": xp_for_next_level(progress.xp),
+        "xp_progress_percent": ((progress.xp % 100) / 100) * 100,
+        "streak": progress.streak_days,
+        "achievements": [
+            {**ACHIEVEMENTS[a], "id": a} 
+            for a in progress.achievements 
+            if a in ACHIEVEMENTS
+        ],
+        "total_achievements": len(ACHIEVEMENTS),
+        "quests_completed": progress.quests_completed,
+        "challenges_solved": progress.challenges_solved,
+        "quizzes_taken": progress.quizzes_taken
+    }
+
+def increment_stat(stat: str) -> None:
+    """Increment a specific stat counter"""
+    progress = load_progress()
+    
+    if stat == "quests":
+        progress.quests_completed += 1
+        if progress.quests_completed == 1:
+            unlock_achievement("quest_starter")
+        elif progress.quests_completed >= 10:
+            unlock_achievement("quest_slayer")
+    elif stat == "challenges":
+        progress.challenges_solved += 1
+        if progress.challenges_solved == 1:
+            unlock_achievement("code_warrior")
+        elif progress.challenges_solved >= 10:
+            unlock_achievement("code_legend")
+    elif stat == "quizzes":
+        progress.quizzes_taken += 1
+        if progress.quizzes_taken == 1:
+            unlock_achievement("first_quiz")
+    
+    save_progress(progress)

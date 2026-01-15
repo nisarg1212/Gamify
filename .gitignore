@@ -1,0 +1,19 @@
+# Gamify AI
+
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+data/
+*.db
+*.sqlite3
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+dist/
+build/
+*.egg-info/

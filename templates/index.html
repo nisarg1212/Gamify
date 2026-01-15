@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamify AI - Transform Everything into a Game</title>
+    <meta name="description" content="Gamify your learning, goals, and coding with AI-powered gamification">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container header-content">
+            <div class="logo">
+                <img src="/static/gamify_logo.png" alt="Gamify AI" class="logo-image">
+            </div>
+
+            <div class="stats-bar">
+                <div class="level-badge" id="level-badge">1</div>
+
+                <div class="xp-bar-container">
+                    <div class="xp-bar-header">
+                        <span id="xp-current">0</span>
+                        <span id="xp-next">/ 100 XP</span>
+                    </div>
+                    <div class="xp-bar">
+                        <div class="xp-bar-fill" id="xp-bar-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <span class="stat-icon">🔥</span>
+                    <span class="stat-value" id="streak-count">0</span>
+                    <span class="stat-label">Streak</span>
+                </div>
+
+                <div class="stat-item">
+                    <span class="stat-icon">🏆</span>
+                    <span class="stat-value" id="achievement-count">0</span>
+                    <span class="stat-label">Achievements</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Welcome Section -->
+            <h1 class="section-title">
+                <span>⚡</span>
+                Choose Your Adventure
+            </h1>
+
+            <!-- Modules Grid -->
+            <div class="modules-grid">
+                <!-- Document Quest -->
+                <div class="module-card" onclick="openModule('document-quest')">
+                    <div class="module-icon">📚</div>
+                    <h2 class="module-title">Document Quest</h2>
+                    <p class="module-description">
+                        Upload any text or document and transform it into an interactive quiz.
+                        Test your knowledge and earn XP!
+                    </p>
+                    <div class="module-stats">
+                        <span class="module-stat">
+                            <span>🎯</span> 10-50 XP per quiz
+                        </span>
+                        <span class="module-stat">
+                            <span>❓</span> AI-generated questions
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Task Warrior -->
+                <div class="module-card" onclick="openModule('task-warrior')">
+                    <div class="module-icon">⚔️</div>
+                    <h2 class="module-title">Task Warrior</h2>
+                    <p class="module-description">
+                        Transform your goals into epic RPG quests! Break down big objectives
+                        into achievable missions with XP rewards.
+                    </p>
+                    <div class="module-stats">
+                        <span class="module-stat">
+                            <span>⚔️</span> Epic quest system
+                        </span>
+                        <span class="module-stat">
+                            <span>👹</span> Boss challenges
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Code Arena -->
+                <div class="module-card" onclick="openModule('code-arena')">
+                    <div class="module-icon">💻</div>
+                    <h2 class="module-title">Code Arena</h2>
+                    <p class="module-description">
+                        Challenge yourself with AI-generated coding problems.
+                        Level up your programming skills and conquer algorithms!
+                    </p>
+                    <div class="module-stats">
+                        <span class="module-stat">
+                            <span>🧠</span> Adaptive difficulty
+                        </span>
+                        <span class="module-stat">
+                            <span>✨</span> Bonus XP for optimal code
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements Section -->
+            <h2 class="section-title">
+                <span>🏆</span>
+                Achievements
+            </h2>
+            <div class="achievements-grid" id="achievements-grid">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Document Quest Modal -->
+    <div class="modal-overlay" id="document-quest-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span>📚</span>
+                    Document Quest
+                </h3>
+                <button class="modal-close" onclick="closeModal('document-quest-modal')">&times;</button>
+            </div>
+            <div class="modal-body" id="document-quest-body">
+                <div id="quiz-input-section">
+                    <div class="form-group">
+                        <label class="form-label">Paste your text or document content</label>
+                        <textarea class="form-textarea" id="document-content"
+                            placeholder="Paste any text here - an article, notes, documentation, or anything you want to learn about..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateQuiz()" id="generate-quiz-btn">
+                        <span>✨</span>
+                        Generate Quiz
+                    </button>
+                </div>
+                <div id="quiz-section" style="display: none;">
+                    <!-- Quiz content populated by JS -->
+                </div>
+                <div id="quiz-results" style="display: none;">
+                    <!-- Results populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Warrior Modal -->
+    <div class="modal-overlay" id="task-warrior-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span>⚔️</span>
+                    Task Warrior
+                </h3>
+                <button class="modal-close" onclick="closeModal('task-warrior-modal')">&times;</button>
+            </div>
+            <div class="modal-body" id="task-warrior-body">
+                <div id="quest-input-section">
+                    <div class="form-group">
+                        <label class="form-label">What's your goal?</label>
+                        <input type="text" class="form-input" id="goal-input"
+                            placeholder="e.g., Learn Python, Build a portfolio, Get fit...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Additional context (optional)</label>
+                        <textarea class="form-textarea" id="goal-context"
+                            placeholder="Any specific details about your goal..." style="min-height: 80px;"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateQuests()" id="generate-quests-btn">
+                        <span>⚔️</span>
+                        Create Quest Line
+                    </button>
+                </div>
+                <div id="quest-section" style="display: none;">
+                    <!-- Quest content populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Code Arena Modal -->
+    <div class="modal-overlay" id="code-arena-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span>💻</span>
+                    Code Arena
+                </h3>
+                <button class="modal-close" onclick="closeModal('code-arena-modal')">&times;</button>
+            </div>
+            <div class="modal-body" id="code-arena-body">
+                <div id="challenge-select-section">
+                    <label class="form-label">Select Difficulty</label>
+                    <div class="difficulty-selector">
+                        <button class="difficulty-btn active" data-diff="Easy" onclick="selectDifficulty('Easy', this)">
+                            🟢 Easy (+20 XP)
+                        </button>
+                        <button class="difficulty-btn" data-diff="Medium" onclick="selectDifficulty('Medium', this)">
+                            🟡 Medium (+40 XP)
+                        </button>
+                        <button class="difficulty-btn" data-diff="Hard" onclick="selectDifficulty('Hard', this)">
+                            🔴 Hard (+70 XP)
+                        </button>
+                    </div>
+
+                    <label class="form-label">Select Topic</label>
+                    <div class="topic-grid" id="topic-grid">
+                        <button class="topic-btn active" data-topic="general" onclick="selectTopic('general', this)">
+                            <span class="topic-icon">🎯</span>
+                            General
+                        </button>
+                        <button class="topic-btn" data-topic="strings" onclick="selectTopic('strings', this)">
+                            <span class="topic-icon">📝</span>
+                            Strings
+                        </button>
+                        <button class="topic-btn" data-topic="arrays" onclick="selectTopic('arrays', this)">
+                            <span class="topic-icon">📊</span>
+                            Arrays
+                        </button>
+                        <button class="topic-btn" data-topic="math" onclick="selectTopic('math', this)">
+                            <span class="topic-icon">🔢</span>
+                            Math
+                        </button>
+                        <button class="topic-btn" data-topic="algorithms" onclick="selectTopic('algorithms', this)">
+                            <span class="topic-icon">⚡</span>
+                            Algorithms
+                        </button>
+                        <button class="topic-btn" data-topic="data_structures"
+                            onclick="selectTopic('data_structures', this)">
+                            <span class="topic-icon">🏗️</span>
+                            Data Structures
+                        </button>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="generateChallenge()" id="generate-challenge-btn">
+                        <span>⚡</span>
+                        Start Challenge
+                    </button>
+                </div>
+                <div id="challenge-section" style="display: none;">
+                    <!-- Challenge content populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- XP Popup -->
+    <div id="xp-popup" class="xp-popup" style="display: none;">
+        <div class="xp-popup-value" id="xp-popup-value">+50 XP</div>
+    </div>
+
+    <!-- Level Up Overlay -->
+    <div class="level-up-overlay" id="level-up-overlay">
+        <div class="level-up-content">
+            <div class="level-up-text">🎉 LEVEL UP! 🎉</div>
+            <div class="level-up-number" id="new-level">2</div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>
