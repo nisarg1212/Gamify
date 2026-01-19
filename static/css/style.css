@@ -1,38 +1,62 @@
 /* ============================================
-   GAMIFY AI - Modern Dark Theme Stylesheet
+   GAMIFY AI - Retro Gaming Pixel Aesthetic
+   Inspired by Codedex.io
    ============================================ */
 
-/* CSS Variables */
+/* Google Font import for Pixel Font */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* CSS Variables - Retro Gaming Theme */
 :root {
-    --bg-primary: #0a0a0f;
-    --bg-secondary: #12121a;
-    --bg-card: rgba(25, 25, 35, 0.8);
-    --bg-glass: rgba(255, 255, 255, 0.03);
+    /* Background Colors */
+    --bg-primary: #0d0d1a;
+    --bg-secondary: #141428;
+    --bg-card: #1a1a2e;
+    --bg-glass: rgba(26, 26, 46, 0.9);
 
+    /* Text Colors */
     --text-primary: #ffffff;
-    --text-secondary: #a0a0b0;
-    --text-muted: #666680;
+    --text-secondary: #b8b8d0;
+    --text-muted: #6b6b8a;
 
-    --accent-primary: #6366f1;
-    --accent-secondary: #8b5cf6;
-    --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+    /* Accent Colors - Retro Gaming */
+    --gold: #ffd700;
+    --gold-dark: #b8860b;
+    --green: #4ade80;
+    --green-dark: #22c55e;
+    --blue: #60a5fa;
+    --purple: #a855f7;
+    --pink: #f472b6;
+    --cyan: #22d3d3;
 
-    --success: #10b981;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --info: #3b82f6;
+    /* Status Colors */
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --info: #60a5fa;
 
-    --xp-gradient: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
+    /* Pixel Border */
+    --pixel-border: #2a2a4a;
+    --pixel-border-light: #3a3a5a;
 
-    --border-color: rgba(255, 255, 255, 0.08);
-    --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.3);
+    /* XP Gradient */
+    --xp-gradient: linear-gradient(90deg, #ffd700, #ffed4a, #ffd700);
+    --accent-gradient: linear-gradient(135deg, #ffd700, #ff9500);
 
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
-    --radius-xl: 24px;
+    /* Border & Effects */
+    --border-color: #2a2a4a;
+    --shadow-glow: 0 0 20px rgba(255, 215, 0, 0.3);
+    --shadow-block: 4px 4px 0 #0a0a14;
 
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Radii */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+
+    /* Transitions */
+    --transition: all 0.2s ease;
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 /* Reset & Base */
@@ -47,7 +71,7 @@ html {
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.6;
@@ -55,7 +79,7 @@ body {
     overflow-x: hidden;
 }
 
-/* Animated Background */
+/* Pixel Background Pattern */
 body::before {
     content: '';
     position: fixed;
@@ -63,27 +87,45 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background:
-        radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
+    background-image:
+        radial-gradient(circle at 25% 25%, rgba(255, 215, 0, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(74, 222, 128, 0.05) 0%, transparent 50%);
     pointer-events: none;
     z-index: -1;
 }
 
+/* Scanline Effect (subtle) */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 0, 0, 0.03) 2px,
+            rgba(0, 0, 0, 0.03) 4px);
+    pointer-events: none;
+    z-index: 9999;
+}
+
 /* Container */
 .container {
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 0 24px;
 }
 
-/* Header */
+/* ============================================
+   HEADER - Retro Gaming Style
+   ============================================ */
+
 .header {
-    padding: 24px 0;
-    background: rgba(10, 10, 15, 0.8);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border-color);
+    padding: 16px 0;
+    background: var(--bg-secondary);
+    border-bottom: 4px solid var(--pixel-border);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -102,20 +144,24 @@ body::before {
 }
 
 .logo-image {
-    height: 65px;
+    height: 50px;
     width: auto;
     object-fit: contain;
+    image-rendering: pixelated;
 }
 
-.logo-icon {
-    font-size: 2rem;
+.logo-text {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1rem;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 var(--gold-dark);
 }
 
 /* Stats Bar */
 .stats-bar {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 20px;
 }
 
 .stat-item {
@@ -123,9 +169,9 @@ body::before {
     align-items: center;
     gap: 8px;
     padding: 8px 16px;
-    background: var(--bg-glass);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    border: 3px solid var(--pixel-border);
+    box-shadow: 3px 3px 0 var(--pixel-border);
 }
 
 .stat-icon {
@@ -133,90 +179,186 @@ body::before {
 }
 
 .stat-value {
-    font-weight: 700;
-    font-size: 1.1rem;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.75rem;
+    color: var(--gold);
 }
 
 .stat-label {
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
 }
 
-/* XP Progress Bar */
+/* Level Badge - Pixel Style */
+.level-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    border: 4px solid #0a0a14;
+    box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.3),
+        4px 4px 0 #0a0a14;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.9rem;
+    color: #0a0a14;
+}
+
+/* XP Progress Bar - Segmented Pixel Style */
 .xp-bar-container {
-    width: 200px;
+    width: 180px;
 }
 
 .xp-bar-header {
     display: flex;
     justify-content: space-between;
     margin-bottom: 6px;
-    font-size: 0.85rem;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.5rem;
+}
+
+#xp-current {
+    color: var(--gold);
+}
+
+#xp-next {
+    color: var(--text-muted);
 }
 
 .xp-bar {
-    height: 8px;
-    background: var(--bg-secondary);
-    border-radius: 10px;
+    height: 16px;
+    background: var(--bg-primary);
+    border: 3px solid var(--pixel-border);
+    box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.5);
+    position: relative;
     overflow: hidden;
 }
 
 .xp-bar-fill {
     height: 100%;
-    background: var(--xp-gradient);
-    border-radius: 10px;
+    background: var(--gold);
+    box-shadow:
+        inset 0 -4px 0 var(--gold-dark),
+        inset 0 4px 0 rgba(255, 255, 255, 0.3);
     transition: width 0.5s ease;
-    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+    /* Pixel segment effect */
+    background-image: repeating-linear-gradient(90deg,
+            transparent,
+            transparent 8px,
+            rgba(0, 0, 0, 0.2) 8px,
+            rgba(0, 0, 0, 0.2) 10px);
 }
 
-/* Level Badge */
-.level-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    background: var(--accent-gradient);
-    border-radius: 50%;
-    font-weight: 800;
-    font-size: 1.25rem;
-    box-shadow: var(--shadow-glow);
-}
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
 
-/* Main Content */
 .main {
     padding: 48px 0;
 }
 
-/* Section Titles */
+/* Section Titles - Pixel Font */
 .section-title {
-    font-size: 2rem;
-    font-weight: 700;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1rem;
     margin-bottom: 24px;
     display: flex;
     align-items: center;
     gap: 12px;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 var(--gold-dark);
 }
 
-/* Module Cards Grid */
-.modules-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-    gap: 24px;
-    margin-bottom: 48px;
+/* ============================================
+   BUTTONS - 3D Block Style
+   ============================================ */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 24px;
+    border: none;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.65rem;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    text-transform: uppercase;
+    position: relative;
 }
 
-/* Module Card */
+.btn-primary {
+    background: var(--gold);
+    color: #0a0a14;
+    border: 4px solid #0a0a14;
+    box-shadow: 6px 6px 0 #0a0a14;
+}
+
+.btn-primary:hover {
+    transform: translate(3px, 3px);
+    box-shadow: 3px 3px 0 #0a0a14;
+}
+
+.btn-primary:active {
+    transform: translate(6px, 6px);
+    box-shadow: 0 0 0 #0a0a14;
+}
+
+.btn-secondary {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 4px solid var(--pixel-border);
+    box-shadow: 4px 4px 0 var(--pixel-border);
+}
+
+.btn-secondary:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--pixel-border);
+    border-color: var(--gold);
+}
+
+.btn-success {
+    background: var(--green);
+    color: #0a0a14;
+    border: 4px solid #0a0a14;
+    box-shadow: 6px 6px 0 #0a0a14;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: #0a0a14;
+    border: 4px solid #0a0a14;
+    box-shadow: 6px 6px 0 #0a0a14;
+}
+
+.btn-large {
+    padding: 18px 32px;
+    font-size: 0.7rem;
+}
+
+.btn-sm {
+    padding: 10px 16px;
+    font-size: 0.55rem;
+    box-shadow: 3px 3px 0 #0a0a14;
+}
+
+/* ============================================
+   CARDS - Pixel Border Style
+   ============================================ */
+
 .module-card {
     background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
-    padding: 32px;
-    backdrop-filter: blur(20px);
+    border: 4px solid var(--pixel-border);
+    box-shadow: 6px 6px 0 var(--pixel-border);
+    padding: 28px;
     transition: var(--transition);
     cursor: pointer;
     position: relative;
-    overflow: hidden;
 }
 
 .module-card::before {
@@ -224,17 +366,17 @@ body::before {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
+    right: 0;
     height: 4px;
-    background: var(--accent-gradient);
+    background: var(--gold);
     opacity: 0;
     transition: var(--transition);
 }
 
 .module-card:hover {
-    transform: translateY(-8px);
-    border-color: rgba(99, 102, 241, 0.5);
-    box-shadow: var(--shadow-glow);
+    transform: translate(-3px, -3px);
+    box-shadow: 9px 9px 0 var(--pixel-border);
+    border-color: var(--gold);
 }
 
 .module-card:hover::before {
@@ -242,220 +384,441 @@ body::before {
 }
 
 .module-icon {
-    font-size: 3rem;
+    font-size: 2.5rem;
     margin-bottom: 16px;
 }
 
 .module-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 8px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    color: var(--gold);
 }
 
 .module-description {
     color: var(--text-secondary);
     margin-bottom: 20px;
     line-height: 1.7;
+    font-size: 0.95rem;
 }
 
-.module-stats {
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 24px;
+    margin-bottom: 48px;
+}
+
+/* ============================================
+   TOPIC INPUT SECTION - Hero Style
+   ============================================ */
+
+.topic-section {
+    text-align: center;
+    padding: 72px 0 40px;
+}
+
+.hero-title {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    line-height: 1.6;
+    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+}
+
+.gradient-text {
+    color: var(--gold);
+    text-shadow:
+        4px 4px 0 var(--gold-dark),
+        -1px -1px 0 #0a0a14,
+        1px -1px 0 #0a0a14,
+        -1px 1px 0 #0a0a14,
+        1px 1px 0 #0a0a14;
+}
+
+.hero-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+}
+
+.topic-input-wrapper {
     display: flex;
     gap: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border-color);
+    max-width: 700px;
+    margin: 0 auto;
 }
 
-.module-stat {
+.topic-input {
+    flex: 1;
+    padding: 18px 24px;
+    background: var(--bg-card);
+    border: 4px solid var(--pixel-border);
+    box-shadow: inset 4px 4px 0 rgba(0, 0, 0, 0.3);
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    transition: var(--transition);
+}
+
+.topic-input:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow:
+        inset 4px 4px 0 rgba(0, 0, 0, 0.3),
+        0 0 0 4px rgba(255, 215, 0, 0.2);
+}
+
+.topic-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Featured Quests Grid */
+.featured-title {
+    text-align: center;
+    justify-content: center;
+    margin-bottom: 18px;
+}
+
+.featured-quests-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 18px;
+    margin-bottom: 40px;
+}
+
+.quest-card {
+    background: var(--bg-card);
+    border: 3px solid var(--pixel-border);
+    box-shadow: 4px 4px 0 var(--pixel-border);
+    padding: 14px 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+    position: relative;
+}
+
+.quest-card:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 8px 8px 0 var(--pixel-border);
+    border-color: var(--gold);
+}
+
+.quest-card:active {
+    transform: translate(0, 0);
+    box-shadow: 2px 2px 0 var(--pixel-border);
+}
+
+.quest-icon {
+    font-size: 1.8rem;
+    margin-bottom: 6px;
+}
+
+.quest-title {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.5rem;
+    color: var(--gold);
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.quest-description {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    line-height: 1.3;
+}
+
+.quest-xp {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.5rem;
+    color: var(--green);
+}
+
+.quest-level-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: var(--purple);
+    color: white;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.35rem;
+    padding: 4px 6px;
+    border: 2px solid var(--pixel-border);
+}
+
+/* Custom Topic Divider */
+.custom-topic-divider {
     display: flex;
     align-items: center;
+    gap: 20px;
+    margin: 36px auto;
+    max-width: 700px;
+}
+
+.custom-topic-divider::before,
+.custom-topic-divider::after {
+    content: '';
+    flex: 1;
+    height: 3px;
+    background: var(--pixel-border);
+}
+
+.custom-topic-divider span {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.5rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* Mode Preview - Pixel Style */
+.mode-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.mode-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: var(--bg-card);
+    border: 3px solid var(--pixel-border);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.5rem;
+}
+
+.mode-icon {
+    font-size: 1.25rem;
+}
+
+.mode-arrow {
+    color: var(--gold);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.8rem;
+}
+
+/* ============================================
+   SESSION CONTAINER - Sidebar Layout
+   ============================================ */
+
+.session-container {
+    display: flex;
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* Vertical Sidebar */
+.session-sidebar {
+    width: 180px;
+    flex-shrink: 0;
+    background: var(--bg-card);
+    border: 4px solid var(--pixel-border);
+    box-shadow: 6px 6px 0 var(--pixel-border);
+    padding: 20px;
+    height: fit-content;
+    position: sticky;
+    top: 100px;
+}
+
+.sidebar-topic {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.55rem;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid var(--pixel-border);
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+/* Sidebar Level Indicators */
+.sidebar-levels {
+    display: flex;
+    justify-content: center;
     gap: 6px;
-    font-size: 0.9rem;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid var(--pixel-border);
+}
+
+.sidebar-level {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.4rem;
+    padding: 6px 8px;
+    border: 2px solid var(--pixel-border);
+    background: var(--bg-primary);
+    color: var(--text-muted);
+    opacity: 0.4;
+}
+
+.sidebar-level.active {
+    background: var(--green);
+    border-color: var(--green);
+    color: white;
+    opacity: 1;
+}
+
+.sidebar-level.completed {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--bg-primary);
+    opacity: 1;
+}
+
+.sidebar-level.locked {
+    opacity: 0.5;
+}
+
+.progress-steps-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Vertical Progress Step */
+.progress-step-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px;
+    width: 100%;
+    opacity: 0.4;
+    transition: var(--transition);
+    text-align: center;
+}
+
+.progress-step-v.active {
+    opacity: 1;
+    background: rgba(255, 215, 0, 0.15);
+    border: 2px solid var(--gold);
+}
+
+.progress-step-v.completed {
+    opacity: 1;
+}
+
+.progress-step-v.completed .step-icon-v {
+    color: var(--green);
+}
+
+.step-icon-v {
+    font-size: 1.5rem;
+}
+
+.step-label-v {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.45rem;
     color: var(--text-secondary);
 }
 
-/* Buttons */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border: none;
-    border-radius: var(--radius-md);
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-    text-decoration: none;
+.progress-line-v {
+    width: 3px;
+    height: 20px;
+    background: var(--pixel-border);
 }
 
-.btn-primary {
-    background: var(--accent-gradient);
-    color: white;
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+/* Main Content Area */
+.session-main {
+    flex: 1;
+    min-width: 0;
 }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
-}
+/* ============================================
+   MODE SECTIONS
+   ============================================ */
 
-.btn-secondary {
-    background: var(--bg-glass);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: var(--accent-primary);
-}
-
-.btn-success {
-    background: var(--success);
-    color: white;
-}
-
-.btn-danger {
-    background: var(--danger);
-    color: white;
-}
-
-/* Modal */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 24px;
-}
-
-.modal-overlay.active {
-    display: flex;
-}
-
-.modal {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
-    width: 100%;
-    max-width: 700px;
-    max-height: 90vh;
-    overflow-y: auto;
-    animation: modalSlide 0.3s ease;
-}
-
-@keyframes modalSlide {
-    from {
-        opacity: 0;
-        transform: translateY(-20px) scale(0.95);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-.modal-header {
-    padding: 24px 32px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.modal-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.modal-close {
-    width: 40px;
-    height: 40px;
-    border: none;
-    background: var(--bg-glass);
-    color: var(--text-primary);
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 1.25rem;
-    transition: var(--transition);
-}
-
-.modal-close:hover {
-    background: var(--danger);
-}
-
-.modal-body {
+.mode-section {
+    background: var(--bg-card);
+    border: 4px solid var(--pixel-border);
+    box-shadow: 6px 6px 0 var(--pixel-border);
     padding: 32px;
-}
-
-/* Forms */
-.form-group {
     margin-bottom: 24px;
 }
 
-.form-label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: var(--text-secondary);
+.mode-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--pixel-border);
 }
 
-.form-input,
-.form-textarea {
-    width: 100%;
-    padding: 14px 18px;
-    background: var(--bg-glass);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+.mode-header h3 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     color: var(--text-primary);
+}
+
+.xp-badge {
+    background: var(--gold);
+    color: #0a0a14;
+    padding: 8px 16px;
+    border: 3px solid #0a0a14;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.5rem;
+    box-shadow: 3px 3px 0 #0a0a14;
+}
+
+/* Story Card */
+.story-card {
+    background: var(--bg-primary);
+    border: 3px solid var(--pixel-border);
+    padding: 28px;
+    margin-bottom: 24px;
+}
+
+.story-title {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.75rem;
+    margin-bottom: 20px;
+    color: var(--cyan);
+    line-height: 1.6;
+}
+
+.story-content {
+    line-height: 1.9;
+    color: var(--text-secondary);
     font-size: 1rem;
-    transition: var(--transition);
 }
 
-.form-input:focus,
-.form-textarea:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+.story-content p {
+    margin-bottom: 16px;
 }
 
-.form-textarea {
-    min-height: 150px;
-    resize: vertical;
-    font-family: inherit;
-}
+/* ============================================
+   QUIZ STYLES
+   ============================================ */
 
-/* Quiz Styles */
 .quiz-question {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    background: var(--bg-primary);
+    border: 3px solid var(--pixel-border);
     padding: 24px;
     margin-bottom: 20px;
 }
 
 .question-number {
-    color: var(--accent-primary);
-    font-weight: 700;
-    margin-bottom: 8px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.6rem;
+    color: var(--gold);
+    margin-bottom: 12px;
 }
 
 .question-text {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 600;
     margin-bottom: 16px;
+    color: var(--text-primary);
 }
 
 .options-list {
@@ -466,9 +829,8 @@ body::before {
 
 .option-item {
     padding: 14px 18px;
-    background: var(--bg-glass);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    border: 3px solid var(--pixel-border);
     cursor: pointer;
     transition: var(--transition);
     display: flex;
@@ -477,214 +839,259 @@ body::before {
 }
 
 .option-item:hover {
-    border-color: var(--accent-primary);
-    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--gold);
+    transform: translateX(4px);
 }
 
 .option-item.selected {
-    border-color: var(--accent-primary);
-    background: rgba(99, 102, 241, 0.2);
+    border-color: var(--gold);
+    background: rgba(255, 215, 0, 0.1);
+    box-shadow: 4px 4px 0 var(--gold-dark);
 }
 
 .option-item.correct {
-    border-color: var(--success);
-    background: rgba(16, 185, 129, 0.2);
+    border-color: var(--green);
+    background: rgba(74, 222, 128, 0.1);
 }
 
 .option-item.incorrect {
     border-color: var(--danger);
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(248, 113, 113, 0.1);
 }
 
 .option-letter {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-secondary);
-    border-radius: 50%;
-    font-weight: 700;
-    font-size: 0.85rem;
+    background: var(--pixel-border);
+    border: 2px solid var(--text-muted);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.6rem;
 }
 
-/* Quest Styles */
-.quest-item {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 20px 24px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    transition: var(--transition);
+/* ============================================
+   DETECTIVE MODE
+   ============================================ */
+
+.detective-case {
+    background: var(--bg-primary);
+    border: 3px solid var(--pixel-border);
+    padding: 28px;
+    margin-bottom: 24px;
 }
 
-.quest-item:hover {
-    border-color: rgba(99, 102, 241, 0.5);
-}
-
-.quest-item.completed {
-    opacity: 0.6;
-    border-color: var(--success);
-}
-
-.quest-checkbox {
-    width: 28px;
-    height: 28px;
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: var(--transition);
-    flex-shrink: 0;
-}
-
-.quest-checkbox:hover {
-    border-color: var(--accent-primary);
-}
-
-.quest-checkbox.checked {
-    background: var(--success);
-    border-color: var(--success);
-}
-
-.quest-content {
-    flex: 1;
-}
-
-.quest-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.quest-description {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-.quest-xp {
-    background: var(--accent-gradient);
-    padding: 6px 12px;
-    border-radius: var(--radius-sm);
-    font-weight: 700;
-    font-size: 0.85rem;
-}
-
-.quest-difficulty {
-    padding: 4px 10px;
-    border-radius: var(--radius-sm);
+.case-title {
+    font-family: 'Press Start 2P', cursive;
     font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.difficulty-easy {
-    background: rgba(16, 185, 129, 0.2);
-    color: var(--success);
-}
-
-.difficulty-normal {
-    background: rgba(59, 130, 246, 0.2);
-    color: var(--info);
-}
-
-.difficulty-hard {
-    background: rgba(245, 158, 11, 0.2);
+    margin-bottom: 20px;
     color: var(--warning);
+    line-height: 1.6;
 }
 
-.difficulty-epic {
-    background: rgba(168, 85, 247, 0.2);
-    color: #a855f7;
+.case-scenario {
+    line-height: 1.8;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    font-size: 1rem;
 }
 
-/* Code Editor */
-.code-editor {
-    background: #1a1a2e;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    overflow: hidden;
+.clues-section {
+    margin-bottom: 24px;
 }
 
-.code-editor-header {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 12px 16px;
+.clues-section h5 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.6rem;
+    margin-bottom: 16px;
+    color: var(--cyan);
+}
+
+.clue-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 2px solid var(--pixel-border);
+    margin-bottom: 10px;
+}
+
+.clue-icon {
+    font-size: 1.25rem;
+}
+
+.case-question {
+    padding: 16px;
+    background: rgba(251, 191, 36, 0.1);
+    border: 3px solid var(--warning);
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+/* Form Input */
+.form-input {
+    width: 100%;
+    padding: 16px 20px;
+    background: var(--bg-primary);
+    border: 3px solid var(--pixel-border);
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    transition: var(--transition);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+/* ============================================
+   COMPLETION CARD
+   ============================================ */
+
+.completion-card {
+    text-align: center;
+    padding: 48px;
+}
+
+.completion-icon {
+    font-size: 5rem;
+    margin-bottom: 24px;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+.completion-card h3 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1rem;
+    margin-bottom: 24px;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 var(--gold-dark);
+}
+
+.completion-xp {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.5rem;
+    color: var(--gold);
+    margin-bottom: 16px;
+    text-shadow:
+        4px 4px 0 var(--gold-dark),
+        0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+/* Level Progress Bar */
+.level-progress-bar {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
+    margin: 20px 0;
 }
 
-.code-editor-header .dot {
-    width: 12px;
-    height: 12px;
+.level-dot {
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
+    background: var(--bg-primary);
+    border: 3px solid var(--pixel-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.6rem;
+    color: var(--text-muted);
 }
 
-.dot-red {
-    background: #ff5f56;
+.level-dot.completed {
+    background: var(--green);
+    border-color: var(--green);
+    color: white;
 }
 
-.dot-yellow {
-    background: #ffbd2e;
+.level-dot.unlocked {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--bg-primary);
+    animation: pulse 1.5s infinite;
 }
 
-.dot-green {
-    background: #27ca40;
+.level-line {
+    width: 30px;
+    height: 3px;
+    background: var(--pixel-border);
 }
 
-.code-textarea {
-    width: 100%;
-    min-height: 300px;
-    padding: 20px;
-    background: transparent;
-    border: none;
-    color: #e0e0e0;
-    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    resize: vertical;
+.completion-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 20px;
 }
 
-.code-textarea:focus {
-    outline: none;
-}
+/* ============================================
+   RESULTS
+   ============================================ */
 
-/* Results & Feedback */
 .result-card {
     background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    padding: 32px;
+    border: 3px solid var(--pixel-border);
+    padding: 28px;
     text-align: center;
+    margin-top: 20px;
 }
 
 .result-icon {
-    font-size: 4rem;
+    font-size: 3.5rem;
     margin-bottom: 16px;
 }
 
 .result-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin-bottom: 8px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+    color: var(--gold);
 }
 
 .result-xp {
-    font-size: 2.5rem;
-    font-weight: 800;
-    background: var(--accent-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.25rem;
+    color: var(--gold);
     margin: 16px 0;
+    text-shadow: 2px 2px 0 var(--gold-dark);
 }
 
-/* Achievements Grid */
+.result-stats {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.result-explanation {
+    padding: 16px;
+    background: var(--bg-primary);
+    border: 2px solid var(--pixel-border);
+    margin: 16px 0;
+    line-height: 1.6;
+    text-align: left;
+}
+
+/* ============================================
+   ACHIEVEMENTS
+   ============================================ */
+
 .achievements-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -694,47 +1101,53 @@ body::before {
 
 .achievement-item {
     background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    border: 3px solid var(--pixel-border);
     padding: 20px;
     text-align: center;
     transition: var(--transition);
 }
 
 .achievement-item.locked {
-    opacity: 0.4;
+    opacity: 0.3;
     filter: grayscale(1);
 }
 
 .achievement-item:not(.locked):hover {
     transform: translateY(-4px);
-    border-color: var(--accent-primary);
+    border-color: var(--gold);
+    box-shadow: 4px 4px 0 var(--gold-dark);
 }
 
 .achievement-icon {
     font-size: 2.5rem;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
 }
 
 .achievement-name {
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.45rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
 }
 
-/* XP Popup Animation */
+/* ============================================
+   XP POPUP - Pixel Style
+   ============================================ */
+
 .xp-popup {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     background: var(--bg-secondary);
-    border: 2px solid var(--accent-primary);
-    border-radius: var(--radius-xl);
+    border: 6px solid var(--gold);
+    box-shadow:
+        8px 8px 0 #0a0a14,
+        0 0 40px rgba(255, 215, 0, 0.5);
     padding: 40px 60px;
     text-align: center;
     z-index: 2000;
     animation: xpPopup 0.5s ease;
-    box-shadow: var(--shadow-glow);
 }
 
 @keyframes xpPopup {
@@ -744,7 +1157,7 @@ body::before {
     }
 
     50% {
-        transform: translate(-50%, -50%) scale(1.1);
+        transform: translate(-50%, -50%) scale(1.15);
     }
 
     100% {
@@ -754,22 +1167,25 @@ body::before {
 }
 
 .xp-popup-value {
-    font-size: 3rem;
-    font-weight: 800;
-    background: var(--accent-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.25rem;
+    color: var(--gold);
+    text-shadow:
+        3px 3px 0 var(--gold-dark),
+        0 0 20px rgba(255, 215, 0, 0.7);
 }
 
-/* Level Up Animation */
+/* ============================================
+   LEVEL UP OVERLAY
+   ============================================ */
+
 .level-up-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.95);
     display: none;
     align-items: center;
     justify-content: center;
@@ -802,30 +1218,84 @@ body::before {
 }
 
 .level-up-text {
-    font-size: 3rem;
-    font-weight: 800;
-    background: var(--accent-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 16px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.25rem;
+    color: var(--gold);
+    margin-bottom: 24px;
+    text-shadow:
+        4px 4px 0 var(--gold-dark),
+        0 0 30px rgba(255, 215, 0, 0.7);
+    animation: pulse 0.5s infinite alternate;
+}
+
+@keyframes pulse {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(1.1);
+    }
 }
 
 .level-up-number {
-    font-size: 8rem;
-    font-weight: 900;
-    color: white;
-    text-shadow: 0 0 50px rgba(99, 102, 241, 0.8);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 3rem;
+    color: var(--gold);
+    text-shadow:
+        6px 6px 0 var(--gold-dark),
+        0 0 50px rgba(255, 215, 0, 0.8);
 }
 
-/* Loading Spinner */
+/* ============================================
+   LOADING OVERLAY
+   ============================================ */
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(13, 13, 26, 0.98);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5000;
+}
+
+.loading-content {
+    text-align: center;
+}
+
+.loading-content p {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.7rem;
+    margin-top: 24px;
+    color: var(--gold);
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
+/* Pixel Spinner */
 .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid var(--bg-glass);
-    border-top: 4px solid var(--accent-primary);
-    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    border: 6px solid var(--pixel-border);
+    border-top-color: var(--gold);
     animation: spin 1s linear infinite;
+    margin: 0 auto;
 }
 
 @keyframes spin {
@@ -834,125 +1304,140 @@ body::before {
     }
 }
 
-.loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(10, 10, 15, 0.9);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    border-radius: var(--radius-xl);
-}
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
 
-/* Difficulty Selector */
-.difficulty-selector {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
-}
-
-.difficulty-btn {
-    flex: 1;
-    padding: 14px;
-    background: var(--bg-glass);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.difficulty-btn:hover {
-    border-color: var(--accent-primary);
-}
-
-.difficulty-btn.active {
-    border-color: var(--accent-primary);
-    background: rgba(99, 102, 241, 0.2);
-}
-
-/* Topic Grid */
-.topic-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
-}
-
-.topic-btn {
-    padding: 16px;
-    background: var(--bg-glass);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: var(--transition);
-    text-align: center;
-}
-
-.topic-btn:hover {
-    border-color: var(--accent-primary);
-}
-
-.topic-btn.active {
-    border-color: var(--accent-primary);
-    background: rgba(99, 102, 241, 0.2);
-}
-
-.topic-icon {
-    font-size: 1.5rem;
-    display: block;
-    margin-bottom: 8px;
-}
-
-/* Hints */
-.hints-container {
-    margin-top: 20px;
-}
-
-.hint-item {
-    background: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.3);
-    border-radius: var(--radius-md);
-    padding: 12px 16px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.hint-icon {
-    color: var(--warning);
-}
-
-/* Responsive */
 @media (max-width: 768px) {
+    .hero-title {
+        font-size: 1rem;
+    }
+
+    .topic-input-wrapper {
+        flex-direction: column;
+    }
+
+    .stats-bar {
+        gap: 12px;
+    }
+
+    .stat-item {
+        padding: 6px 12px;
+    }
+
+    .stat-label {
+        display: none;
+    }
+
+    .mode-preview {
+        display: none;
+    }
+
+    .session-progress {
+        flex-wrap: wrap;
+    }
+
+    .progress-line {
+        display: none;
+    }
+
+    .mode-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .btn {
+        font-size: 0.55rem;
+        padding: 12px 16px;
+    }
+}
+
+@media (max-width: 480px) {
     .header-content {
         flex-direction: column;
         gap: 16px;
     }
 
-    .stats-bar {
-        flex-wrap: wrap;
-        justify-content: center;
+    .xp-bar-container {
+        width: 140px;
     }
 
-    .modules-grid {
-        grid-template-columns: 1fr;
+    .level-badge {
+        width: 40px;
+        height: 40px;
+        font-size: 0.7rem;
     }
+}
 
-    .topic-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+/* ============================================
+   MODAL STYLES
+   ============================================ */
 
-    .modal {
-        margin: 16px;
-        max-height: calc(100vh - 32px);
-    }
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    border: 4px solid var(--pixel-border);
+    box-shadow: 8px 8px 0 var(--pixel-border);
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--pixel-border);
+}
+
+.modal-header h2 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.8rem;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-close {
+    background: none;
+    border: 3px solid var(--pixel-border);
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.modal-close:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.stat-item.clickable {
+    cursor: pointer;
+}
+
+.stat-item.clickable:hover {
+    background: var(--bg-primary);
+    transform: translateY(-2px);
 }

@@ -1,4 +1,4 @@
-"""Gamification Engine - XP, Levels, Achievements"""
+"""Gamification Engine - XP, Levels, Achievements for V2"""
 import json
 from datetime import datetime
 from pathlib import Path
@@ -7,14 +7,15 @@ from .models import UserProgress
 
 DATA_FILE = Path(__file__).parent.parent / "data" / "user_progress.json"
 
-# Achievement definitions
+# Achievement definitions for V2
 ACHIEVEMENTS = {
-    "first_quiz": {"name": "Quiz Novice", "desc": "Complete your first quiz", "icon": "📚"},
+    "first_story": {"name": "Story Seeker", "desc": "Complete your first story", "icon": "📖"},
+    "storyteller": {"name": "Storyteller", "desc": "Complete 10 stories", "icon": "📚"},
+    "quiz_novice": {"name": "Quiz Novice", "desc": "Pass your first quiz", "icon": "❓"},
     "quiz_master": {"name": "Quiz Master", "desc": "Get 100% on a quiz", "icon": "🎓"},
-    "quest_starter": {"name": "Quest Starter", "desc": "Complete your first quest", "icon": "⚔️"},
-    "quest_slayer": {"name": "Quest Slayer", "desc": "Complete 10 quests", "icon": "🗡️"},
-    "code_warrior": {"name": "Code Warrior", "desc": "Solve your first challenge", "icon": "💻"},
-    "code_legend": {"name": "Code Legend", "desc": "Solve 10 challenges", "icon": "🏆"},
+    "master_student": {"name": "Master Student", "desc": "Complete master practice", "icon": "🏆"},
+    "detective": {"name": "Detective", "desc": "Solve your first case", "icon": "🔍"},
+    "sherlock": {"name": "Sherlock", "desc": "Solve 5 cases", "icon": "🕵️"},
     "streak_3": {"name": "On Fire", "desc": "3 day streak", "icon": "🔥"},
     "streak_7": {"name": "Unstoppable", "desc": "7 day streak", "icon": "⚡"},
     "level_5": {"name": "Rising Star", "desc": "Reach level 5", "icon": "⭐"},
@@ -129,30 +130,35 @@ def get_stats() -> dict:
             if a in ACHIEVEMENTS
         ],
         "total_achievements": len(ACHIEVEMENTS),
-        "quests_completed": progress.quests_completed,
-        "challenges_solved": progress.challenges_solved,
-        "quizzes_taken": progress.quizzes_taken
+        "stories_completed": progress.stories_completed,
+        "quizzes_passed": progress.quizzes_passed,
+        "masters_completed": progress.masters_completed,
+        "cases_solved": progress.cases_solved
     }
 
 def increment_stat(stat: str) -> None:
     """Increment a specific stat counter"""
     progress = load_progress()
     
-    if stat == "quests":
-        progress.quests_completed += 1
-        if progress.quests_completed == 1:
-            unlock_achievement("quest_starter")
-        elif progress.quests_completed >= 10:
-            unlock_achievement("quest_slayer")
-    elif stat == "challenges":
-        progress.challenges_solved += 1
-        if progress.challenges_solved == 1:
-            unlock_achievement("code_warrior")
-        elif progress.challenges_solved >= 10:
-            unlock_achievement("code_legend")
+    if stat == "stories":
+        progress.stories_completed += 1
+        if progress.stories_completed == 1:
+            unlock_achievement("first_story")
+        elif progress.stories_completed >= 10:
+            unlock_achievement("storyteller")
     elif stat == "quizzes":
-        progress.quizzes_taken += 1
-        if progress.quizzes_taken == 1:
-            unlock_achievement("first_quiz")
+        progress.quizzes_passed += 1
+        if progress.quizzes_passed == 1:
+            unlock_achievement("quiz_novice")
+    elif stat == "masters":
+        progress.masters_completed += 1
+        if progress.masters_completed == 1:
+            unlock_achievement("master_student")
+    elif stat == "cases":
+        progress.cases_solved += 1
+        if progress.cases_solved == 1:
+            unlock_achievement("detective")
+        elif progress.cases_solved >= 5:
+            unlock_achievement("sherlock")
     
     save_progress(progress)

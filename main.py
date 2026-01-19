@@ -1,30 +1,30 @@
-"""Gamify AI - Main FastAPI Application"""
+"""Gamify AI V2 - Story-Based Learning Platform"""
 import os
+import uuid
 from pathlib import Path
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, Form, UploadFile, File
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional
-import json
+from typing import List
 
 # Load environment variables
 load_dotenv()
 
 # Import our modules
 from gamification import add_xp, get_stats, increment_stat, unlock_achievement
-from modules import (
-    generate_quiz, score_quiz,
-    generate_quests, complete_quest, get_quest_progress,
-    generate_challenge, evaluate_solution, get_challenge_topics
-)
-from gamification.models import QuestLine
+from modules.unified_generator import generate_all_content
+from modules.prebuilt_quests import get_all_quest_info
+from modules.quiz_mode import score_quiz
+from modules.master_mode import score_master
+from modules.detective_mode import solve_case
+from gamification.models import LearningSession
 
 # Initialize FastAPI
-app = FastAPI(title="Gamify AI", description="Gamify Everything with AI!")
+app = FastAPI(title="Gamify AI", description="Transform any topic into a game!")
 
 # CORS
 app.add_middleware(
@@ -45,28 +45,21 @@ app.mount("/static", StaticFiles(directory=static_path), name="static")
 templates = Jinja2Templates(directory=templates_path)
 
 # In-memory storage for active sessions
-active_quizzes = {}
-active_quest_lines = {}
-active_challenges = {}
+active_sessions = {}
 
 # ==================== Request Models ====================
+
+class TopicRequest(BaseModel):
+    topic: str
 
 class QuizAnswers(BaseModel):
     answers: List[int]
 
-class GoalRequest(BaseModel):
-    goal: str
-    context: Optional[str] = ""
+class MasterAnswers(BaseModel):
+    answers: List[str]
 
-class QuestComplete(BaseModel):
-    quest_id: int
-
-class ChallengeRequest(BaseModel):
-    difficulty: str = "Easy"
-    topic: str = "general"
-
-class CodeSubmission(BaseModel):
-    code: str
+class DetectiveAnswer(BaseModel):
+    answer: str
 
 # ==================== Routes ====================
 
@@ -84,130 +77,198 @@ async def api_stats():
     """Get user gamification stats"""
     return get_stats()
 
-# ==================== Document Quest ====================
+@app.get("/api/featured-quests")
+async def get_featured_quests():
+    """Get list of pre-built featured quests"""
+    quests = get_all_quest_info()
+    return {"quests": quests}
 
-@app.post("/api/quiz/generate")
-async def api_generate_quiz(content: str = Form(...)):
-    """Generate a quiz from text content"""
-    quiz = generate_quiz(content)
-    quiz_id = hash(quiz.title) % 10000
-    active_quizzes[quiz_id] = quiz
+# ==================== Learning Session ====================
+
+@app.post("/api/session/start")
+async def start_session(data: TopicRequest):
+    """Start a new learning session - generates ALL content at once"""
+    session_id = str(uuid.uuid4())[:8]
+    
+    # Generate ALL content in one API call
+    content = generate_all_content(data.topic)
+    
+    # Check if generation failed
+    if content.get("error"):
+        return JSONResponse(
+            {"error": True, "message": content["message"]}, 
+            status_code=503
+        )
+    
+    session = LearningSession(
+        session_id=session_id,
+        topic=data.topic,
+        current_mode="story",
+        story=content["story"],
+        quiz=content["quiz"],
+        master=content["master"],
+        detective=content["detective"]
+    )
+    
+    active_sessions[session_id] = session
     
     return {
-        "quiz_id": quiz_id,
-        "title": quiz.title,
-        "questions": [
-            {
-                "question": q.question,
-                "options": q.options
-            }
-            for q in quiz.questions
-        ],
-        "total_xp": quiz.total_xp
+        "session_id": session_id,
+        "topic": data.topic,
+        "ai_generated": content.get("success", False),
+        "source": content.get("source", "unknown"),
+        "story": {
+            "title": content["story"].title,
+            "content": content["story"].content,
+            "xp_reward": content["story"].xp_reward
+        }
     }
 
-@app.post("/api/quiz/{quiz_id}/submit")
-async def api_submit_quiz(quiz_id: int, data: QuizAnswers):
-    """Submit quiz answers and get results"""
-    if quiz_id not in active_quizzes:
-        return JSONResponse({"error": "Quiz not found"}, status_code=404)
+@app.post("/api/session/{session_id}/complete-story")
+async def complete_story(session_id: str):
+    """Mark story as complete and return quiz (already generated)"""
+    if session_id not in active_sessions:
+        return JSONResponse({"error": "Session not found"}, status_code=404)
     
-    quiz = active_quizzes[quiz_id]
-    result = score_quiz(quiz, data.answers)
+    session = active_sessions[session_id]
     
-    # Award XP
-    xp_result = add_xp(result["xp_earned"], "Quiz completed")
-    increment_stat("quizzes")
+    if not session.story_completed:
+        session.story_completed = True
+        add_xp(session.story.xp_reward, "Story completed")
+        increment_stat("stories")
+        session.total_xp_earned += session.story.xp_reward
     
-    if result["perfect"]:
-        unlock_achievement("quiz_master")
+    session.current_mode = "quiz"
+    
+    # Quiz was already generated with the session
+    return {
+        "story_complete": True,
+        "xp_earned": session.story.xp_reward,
+        "quiz": {
+            "questions": [
+                {"question": q.question, "options": q.options}
+                for q in session.quiz.questions
+            ],
+            "total_xp": session.quiz.total_xp
+        }
+    }
+
+@app.post("/api/session/{session_id}/submit-quiz")
+async def submit_quiz(session_id: str, data: QuizAnswers):
+    """Submit quiz answers and return master practice (already generated)"""
+    if session_id not in active_sessions:
+        return JSONResponse({"error": "Session not found"}, status_code=404)
+    
+    session = active_sessions[session_id]
+    
+    if not session.quiz:
+        return JSONResponse({"error": "Quiz not available"}, status_code=400)
+    
+    result = score_quiz(session.quiz, data.answers)
+    
+    if not session.quiz_completed:
+        session.quiz_completed = True
+        add_xp(result["xp_earned"], "Quiz completed")
+        increment_stat("quizzes")
+        session.total_xp_earned += result["xp_earned"]
+        
+        if result["percentage"] == 100:
+            unlock_achievement("quiz_master")
+    
+    session.current_mode = "master"
+    
+    # Master was already generated with the session
+    return {
+        **result,
+        "next_mode": "master",
+        "master": {
+            "questions": [
+                {"question": q.question, "options": q.options}
+                for q in session.master.questions
+            ],
+            "total_xp": session.master.total_xp
+        }
+    }
+
+@app.post("/api/session/{session_id}/submit-master")
+async def submit_master(session_id: str, data: MasterAnswers):
+    """Submit master practice answers and return detective case (already generated)"""
+    if session_id not in active_sessions:
+        return JSONResponse({"error": "Session not found"}, status_code=404)
+    
+    session = active_sessions[session_id]
+    
+    if not session.master:
+        return JSONResponse({"error": "Master practice not available"}, status_code=400)
+    
+    result = score_master(session.master, data.answers)
+    
+    if not session.master_completed:
+        session.master_completed = True
+        add_xp(result["xp_earned"], "Master practice completed")
+        increment_stat("masters")
+        session.total_xp_earned += result["xp_earned"]
+    
+    session.current_mode = "detective"
+    
+    # Detective was already generated with the session
+    return {
+        **result,
+        "next_mode": "detective",
+        "detective": {
+            "case_title": session.detective.case_title,
+            "scenario": session.detective.scenario,
+            "clues": [{"id": c.id, "description": c.description} for c in session.detective.clues],
+            "question": session.detective.question,
+            "xp_reward": session.detective.xp_reward
+        }
+    }
+
+@app.post("/api/session/{session_id}/solve-case")
+async def solve_detective_case(session_id: str, data: DetectiveAnswer):
+    """Submit detective case answer"""
+    if session_id not in active_sessions:
+        return JSONResponse({"error": "Session not found"}, status_code=404)
+    
+    session = active_sessions[session_id]
+    
+    if not session.detective:
+        return JSONResponse({"error": "Detective case not available"}, status_code=400)
+    
+    result = solve_case(session.detective, data.answer)
+    
+    if not session.detective_completed:
+        session.detective_completed = True
+        add_xp(result["xp_earned"], "Detective case completed")
+        increment_stat("cases")
+        session.total_xp_earned += result["xp_earned"]
+        
+        if result["solved"]:
+            unlock_achievement("detective")
     
     return {
         **result,
-        **xp_result
+        "session_complete": True,
+        "total_session_xp": session.total_xp_earned
     }
 
-# ==================== Task Warrior ====================
-
-@app.post("/api/quests/generate")
-async def api_generate_quests(data: GoalRequest):
-    """Generate quest line from a goal"""
-    quest_line = generate_quests(data.goal, data.context)
-    quest_id = hash(quest_line.goal) % 10000
-    active_quest_lines[quest_id] = quest_line
+@app.get("/api/session/{session_id}")
+async def get_session(session_id: str):
+    """Get current session state"""
+    if session_id not in active_sessions:
+        return JSONResponse({"error": "Session not found"}, status_code=404)
     
+    session = active_sessions[session_id]
     return {
-        "quest_line_id": quest_id,
-        "goal": quest_line.goal,
-        "quests": [q.model_dump() for q in quest_line.quests],
-        "boss_quest": quest_line.boss_quest.model_dump() if quest_line.boss_quest else None,
-        "total_xp": quest_line.total_xp
+        "session_id": session.session_id,
+        "topic": session.topic,
+        "current_mode": session.current_mode,
+        "story_completed": session.story_completed,
+        "quiz_completed": session.quiz_completed,
+        "master_completed": session.master_completed,
+        "detective_completed": session.detective_completed,
+        "total_xp_earned": session.total_xp_earned
     }
-
-@app.post("/api/quests/{quest_line_id}/complete")
-async def api_complete_quest(quest_line_id: int, data: QuestComplete):
-    """Mark a quest as complete"""
-    if quest_line_id not in active_quest_lines:
-        return JSONResponse({"error": "Quest line not found"}, status_code=404)
-    
-    quest_line = active_quest_lines[quest_line_id]
-    result = complete_quest(quest_line, data.quest_id)
-    
-    if result["completed"]:
-        xp_result = add_xp(result["xp_earned"], "Quest completed")
-        increment_stat("quests")
-        progress = get_quest_progress(quest_line)
-        return {**result, **xp_result, "progress": progress}
-    
-    return result
-
-@app.get("/api/quests/{quest_line_id}/progress")
-async def api_quest_progress(quest_line_id: int):
-    """Get progress on a quest line"""
-    if quest_line_id not in active_quest_lines:
-        return JSONResponse({"error": "Quest line not found"}, status_code=404)
-    
-    return get_quest_progress(active_quest_lines[quest_line_id])
-
-# ==================== Code Arena ====================
-
-@app.get("/api/challenges/topics")
-async def api_challenge_topics():
-    """Get available challenge topics"""
-    return get_challenge_topics()
-
-@app.post("/api/challenges/generate")
-async def api_generate_challenge(data: ChallengeRequest):
-    """Generate a coding challenge"""
-    challenge = generate_challenge(data.difficulty, data.topic)
-    active_challenges[challenge.id] = challenge
-    
-    return {
-        "challenge_id": challenge.id,
-        "title": challenge.title,
-        "description": challenge.description,
-        "difficulty": challenge.difficulty,
-        "starter_code": challenge.starter_code,
-        "hints": challenge.hints,
-        "xp_reward": challenge.xp_reward
-    }
-
-@app.post("/api/challenges/{challenge_id}/submit")
-async def api_submit_challenge(challenge_id: int, data: CodeSubmission):
-    """Submit code solution for evaluation"""
-    if challenge_id not in active_challenges:
-        return JSONResponse({"error": "Challenge not found"}, status_code=404)
-    
-    challenge = active_challenges[challenge_id]
-    result = evaluate_solution(challenge, data.code)
-    
-    if result.passed:
-        total_xp = result.xp_earned + result.bonus_xp
-        xp_result = add_xp(total_xp, "Challenge solved")
-        increment_stat("challenges")
-        return {**result.model_dump(), **xp_result}
-    
-    return result.model_dump()
 
 # ==================== Run ====================
 

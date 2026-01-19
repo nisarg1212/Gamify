@@ -1,539 +1,708 @@
 /**
- * Gamify AI - Frontend JavaScript
+ * Gamify AI V2 - Story-Based Learning Frontend (Unified API Version)
  */
 
-// State
-let currentQuiz = null;
-let currentQuizId = null;
-let currentQuestLine = null;
-let currentQuestLineId = null;
-let currentChallenge = null;
-let currentChallengeId = null;
-let selectedDifficulty = 'Easy';
-let selectedTopic = 'general';
-let userAnswers = [];
+// Session state
+let currentSession = null;
+let currentLevel = 1;
+let maxLevel = 3;
+let selectedQuizAnswers = [];
+let selectedMasterAnswers = [];
+let ttsUtterance = null;
+let isSpeaking = false;
 
 // All achievements
 const ALL_ACHIEVEMENTS = {
-    'first_quiz': { name: 'Quiz Novice', desc: 'Complete your first quiz', icon: '📚' },
-    'quiz_master': { name: 'Quiz Master', desc: 'Get 100% on a quiz', icon: '🎓' },
-    'quest_starter': { name: 'Quest Starter', desc: 'Complete your first quest', icon: '⚔️' },
-    'quest_slayer': { name: 'Quest Slayer', desc: 'Complete 10 quests', icon: '🗡️' },
-    'code_warrior': { name: 'Code Warrior', desc: 'Solve your first challenge', icon: '💻' },
-    'code_legend': { name: 'Code Legend', desc: 'Solve 10 challenges', icon: '🏆' },
-    'streak_3': { name: 'On Fire', desc: '3 day streak', icon: '🔥' },
-    'streak_7': { name: 'Unstoppable', desc: '7 day streak', icon: '⚡' },
-    'level_5': { name: 'Rising Star', desc: 'Reach level 5', icon: '⭐' },
-    'level_10': { name: 'Champion', desc: 'Reach level 10', icon: '👑' }
+    "first_story": { name: "Story Seeker", desc: "Complete your first story", icon: "📖" },
+    "storyteller": { name: "Storyteller", desc: "Complete 10 stories", icon: "📚" },
+    "quiz_novice": { name: "Quiz Novice", desc: "Pass your first quiz", icon: "❓" },
+    "quiz_master": { name: "Quiz Master", desc: "Get 100% on a quiz", icon: "🎓" },
+    "master_student": { name: "Master Student", desc: "Complete master practice", icon: "🏆" },
+    "detective": { name: "Detective", desc: "Solve your first case", icon: "🔍" },
+    "sherlock": { name: "Sherlock", desc: "Solve 5 cases", icon: "🕵️" },
+    "streak_3": { name: "On Fire", desc: "3 day streak", icon: "🔥" },
+    "streak_7": { name: "Unstoppable", desc: "7 day streak", icon: "⚡" },
+    "level_5": { name: "Rising Star", desc: "Reach level 5", icon: "⭐" },
+    "level_10": { name: "Champion", desc: "Reach level 10", icon: "👑" }
 };
 
-// Initialize
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadStats();
+    loadFeaturedQuests();
     renderAchievements([]);
+
+    // Enter key to start
+    document.getElementById('topic-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') startLearning();
+    });
 });
 
-// ==================== Stats ====================
+// ==================== API Calls ====================
+
+async function loadFeaturedQuests() {
+    try {
+        const response = await fetch('/api/featured-quests');
+        const data = await response.json();
+        renderFeaturedQuests(data.quests || []);
+    } catch (error) {
+        console.error('Error loading featured quests:', error);
+    }
+}
+
+function renderFeaturedQuests(quests) {
+    const container = document.getElementById('featured-quests');
+    if (!container) return;
+
+    container.innerHTML = quests.map(quest => `
+        <div class="quest-card" onclick="startFeaturedQuest('${quest.title}')">
+            <div class="quest-icon">${quest.icon}</div>
+            <div class="quest-title">${quest.title.toUpperCase()}</div>
+            <div class="quest-description">${quest.description}</div>
+            <div class="quest-xp">+${quest.xp_per_level ? quest.xp_per_level[0] : 295} XP</div>
+        </div>
+    `).join('');
+}
+
+function startFeaturedQuest(topic) {
+    document.getElementById('topic-input').value = topic;
+    startLearning();
+}
 
 async function loadStats() {
     try {
         const response = await fetch('/api/stats');
         const stats = await response.json();
-        updateDisplay(stats);
+        updateStatsDisplay(stats);
         renderAchievements(stats.achievements || []);
     } catch (error) {
         console.error('Error loading stats:', error);
     }
 }
 
-function updateDisplay(stats) {
+function updateStatsDisplay(stats) {
     document.getElementById('level-badge').textContent = stats.level || 1;
     document.getElementById('xp-current').textContent = stats.xp || 0;
-    document.getElementById('xp-next').textContent = `/ ${((stats.level || 1) * 100)} XP`;
     document.getElementById('xp-bar-fill').style.width = `${stats.xp_progress_percent || 0}%`;
     document.getElementById('streak-count').textContent = stats.streak || 0;
-    document.getElementById('achievement-count').textContent = 
-        (stats.achievements?.length || 0) + '/' + Object.keys(ALL_ACHIEVEMENTS).length;
+    document.getElementById('achievement-count').textContent =
+        `${(stats.achievements || []).length}/${stats.total_achievements || 11}`;
 }
 
-function renderAchievements(unlockedAchievements) {
-    const grid = document.getElementById('achievements-grid');
-    const unlockedIds = unlockedAchievements.map(a => a.id);
-    
-    grid.innerHTML = Object.entries(ALL_ACHIEVEMENTS).map(([id, ach]) => `
-        <div class="achievement-item ${unlockedIds.includes(id) ? '' : 'locked'}">
-            <div class="achievement-icon">${ach.icon}</div>
-            <div class="achievement-name">${ach.name}</div>
-        </div>
-    `).join('');
-}
+// ==================== Learning Flow ====================
 
-// ==================== Modal Controls ====================
-
-function openModule(moduleName) {
-    document.getElementById(`${moduleName}-modal`).classList.add('active');
-}
-
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
-    // Reset states
-    if (modalId === 'document-quest-modal') {
-        resetQuiz();
-    }
-}
-
-// ==================== Document Quest ====================
-
-async function generateQuiz() {
-    const content = document.getElementById('document-content').value.trim();
-    if (!content) {
-        alert('Please paste some text content first!');
+async function startLearning() {
+    const topic = document.getElementById('topic-input').value.trim();
+    if (!topic) {
+        alert('Please enter a topic!');
         return;
     }
 
-    const btn = document.getElementById('generate-quiz-btn');
-    btn.innerHTML = '<span class="spinner"></span> Generating...';
-    btn.disabled = true;
+    showLoading('Generating your adventure...');
 
     try {
-        const formData = new FormData();
-        formData.append('content', content);
-
-        const response = await fetch('/api/quiz/generate', {
+        const response = await fetch('/api/session/start', {
             method: 'POST',
-            body: formData
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic })
         });
 
         const data = await response.json();
-        currentQuiz = data;
-        currentQuizId = data.quiz_id;
-        userAnswers = new Array(data.questions.length).fill(-1);
-        
-        renderQuiz(data);
-        document.getElementById('quiz-input-section').style.display = 'none';
-        document.getElementById('quiz-section').style.display = 'block';
+
+        // Check for error response
+        if (data.error || !response.ok) {
+            hideLoading();
+            alert(data.message || 'Unable to generate content. Please try a Featured Quest instead!');
+            return;
+        }
+
+        currentSession = {
+            id: data.session_id,
+            topic: data.topic,
+            aiGenerated: data.ai_generated,
+            source: data.source
+        };
+
+        // Show session UI
+        document.getElementById('topic-section').style.display = 'none';
+        document.getElementById('session-container').style.display = 'flex';
+        document.getElementById('sidebar-topic').textContent = data.topic;
+
+        // Display story
+        document.getElementById('story-title').textContent = data.story.title;
+        document.getElementById('story-content').innerHTML = formatStoryContent(data.story.content);
+
+        // Activate story step and update level display
+        activateStep('story');
+        updateSidebarLevels(currentLevel);
+
+        hideLoading();
+
+        // Log content source
+        console.log(`✅ Content loaded (source: ${data.source})`);
     } catch (error) {
-        console.error('Error generating quiz:', error);
-        alert('Failed to generate quiz. Please try again.');
-    } finally {
-        btn.innerHTML = '<span>✨</span> Generate Quiz';
-        btn.disabled = false;
+        hideLoading();
+        alert('Error starting session. Please try a Featured Quest!');
+        console.error(error);
     }
 }
 
+async function completeStory() {
+    if (!currentSession) return;
+
+    stopTTS();
+    showLoading('Loading quiz...');
+
+    try {
+        const response = await fetch(`/api/session/${currentSession.id}/complete-story`, {
+            method: 'POST'
+        });
+
+        const data = await response.json();
+
+        // Show XP earned
+        showXPPopup(data.xp_earned);
+
+        // Render quiz (already generated!)
+        renderQuiz(data.quiz);
+
+        // Switch to quiz mode
+        document.getElementById('story-mode').style.display = 'none';
+        document.getElementById('quiz-mode').style.display = 'block';
+        activateStep('quiz');
+
+        hideLoading();
+        loadStats();
+    } catch (error) {
+        hideLoading();
+        alert('Error completing story. Please try again.');
+        console.error(error);
+    }
+}
+
+async function submitQuiz() {
+    if (!currentSession) return;
+
+    // Collect answers
+    const questions = document.querySelectorAll('.quiz-question');
+    selectedQuizAnswers = [];
+
+    questions.forEach((q, idx) => {
+        const selected = q.querySelector('.option-item.selected');
+        selectedQuizAnswers.push(selected ? parseInt(selected.dataset.index) : -1);
+    });
+
+    showLoading('Checking answers...');
+
+    try {
+        const response = await fetch(`/api/session/${currentSession.id}/submit-quiz`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answers: selectedQuizAnswers })
+        });
+
+        const data = await response.json();
+
+        // Show results
+        showQuizResults(data);
+        showXPPopup(data.xp_earned);
+
+        hideLoading();
+        loadStats();
+
+        // Auto-continue to master after 2 seconds
+        setTimeout(() => {
+            document.getElementById('quiz-mode').style.display = 'none';
+            document.getElementById('master-mode').style.display = 'block';
+            document.getElementById('quiz-results').style.display = 'none';
+            document.getElementById('submit-quiz-btn').style.display = 'block';
+            activateStep('master');
+
+            // Render master questions from API response (pre-generated!)
+            renderMasterQuestions(data.master);
+        }, 2000);
+
+    } catch (error) {
+        hideLoading();
+        alert('Error submitting quiz. Please try again.');
+        console.error(error);
+    }
+}
+
+async function submitMaster() {
+    if (!currentSession) return;
+
+    // Collect answers from master questions
+    const questions = document.querySelectorAll('.master-question');
+    selectedMasterAnswers = [];
+
+    questions.forEach((q, idx) => {
+        const selected = q.querySelector('.option-item.selected');
+        if (selected) {
+            selectedMasterAnswers.push(selected.dataset.value);
+        } else {
+            selectedMasterAnswers.push('');
+        }
+    });
+
+    showLoading('Evaluating your mastery...');
+
+    try {
+        const response = await fetch(`/api/session/${currentSession.id}/submit-master`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answers: selectedMasterAnswers })
+        });
+
+        const data = await response.json();
+
+        // Show results
+        showMasterResults(data);
+        showXPPopup(data.xp_earned);
+
+        hideLoading();
+        loadStats();
+
+        // Auto-continue to detective after 2 seconds
+        setTimeout(() => {
+            document.getElementById('master-mode').style.display = 'none';
+            document.getElementById('detective-mode').style.display = 'block';
+            document.getElementById('master-results').style.display = 'none';
+            document.getElementById('submit-master-btn').style.display = 'block';
+            activateStep('detective');
+
+            // Render detective case from API response (pre-generated!)
+            renderDetective(data.detective);
+        }, 2000);
+
+    } catch (error) {
+        hideLoading();
+        alert('Error submitting master practice. Please try again.');
+        console.error(error);
+    }
+}
+
+async function solveCase() {
+    if (!currentSession) return;
+
+    const answer = document.getElementById('detective-answer').value.trim();
+    if (!answer) {
+        alert('Please enter your answer!');
+        return;
+    }
+
+    showLoading('Checking your solution...');
+
+    try {
+        const response = await fetch(`/api/session/${currentSession.id}/solve-case`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answer })
+        });
+
+        const data = await response.json();
+
+        // Show results
+        showDetectiveResults(data);
+        showXPPopup(data.xp_earned);
+
+        hideLoading();
+        loadStats();
+
+        // Show completion after 2 seconds
+        setTimeout(() => {
+            document.getElementById('detective-mode').style.display = 'none';
+            document.getElementById('session-complete').style.display = 'block';
+            document.getElementById('total-xp-earned').textContent = `+${data.total_session_xp || 0} XP`;
+            updateLevelProgress(currentLevel);
+        }, 2000);
+
+    } catch (error) {
+        hideLoading();
+        alert('Error solving case. Please try again.');
+        console.error(error);
+    }
+}
+
+function newAdventure() {
+    currentSession = null;
+    currentLevel = 1;  // Reset level for new quest
+    document.getElementById('session-container').style.display = 'none';
+    document.getElementById('topic-section').style.display = 'block';
+    document.getElementById('topic-input').value = '';
+
+    // Reset all modes
+    document.getElementById('story-mode').style.display = 'block';
+    document.getElementById('quiz-mode').style.display = 'none';
+    document.getElementById('master-mode').style.display = 'none';
+    document.getElementById('detective-mode').style.display = 'none';
+    document.getElementById('session-complete').style.display = 'none';
+
+    // Reset result displays
+    document.getElementById('quiz-results').style.display = 'none';
+    document.getElementById('master-results').style.display = 'none';
+    document.getElementById('detective-results').style.display = 'none';
+    document.getElementById('detective-answer').value = '';
+
+    // Reset progress steps
+    document.querySelectorAll('.progress-step-v').forEach(step => {
+        step.classList.remove('active', 'completed');
+    });
+}
+
+// ==================== UI Rendering ====================
+
+function formatStoryContent(content) {
+    return content.split('\n').filter(p => p.trim()).map(p => `<p>${p}</p>`).join('');
+}
+
 function renderQuiz(quiz) {
-    const section = document.getElementById('quiz-section');
-    section.innerHTML = `
-        <h3 style="margin-bottom: 20px; color: var(--accent-primary);">📝 ${quiz.title}</h3>
-        <p style="color: var(--text-secondary); margin-bottom: 24px;">
-            Answer all questions to earn up to <strong>${quiz.total_xp} XP</strong>!
-        </p>
-        ${quiz.questions.map((q, i) => `
-            <div class="quiz-question">
-                <div class="question-number">Question ${i + 1} of ${quiz.questions.length}</div>
+    const container = document.getElementById('quiz-questions');
+    container.innerHTML = '';
+
+    quiz.questions.forEach((q, idx) => {
+        const questionHtml = `
+            <div class="quiz-question" data-index="${idx}">
+                <div class="question-number">Question ${idx + 1}</div>
                 <div class="question-text">${q.question}</div>
                 <div class="options-list">
-                    ${q.options.map((opt, j) => `
-                        <div class="option-item" onclick="selectAnswer(${i}, ${j}, this)" data-q="${i}" data-a="${j}">
-                            <span class="option-letter">${String.fromCharCode(65 + j)}</span>
+                    ${q.options.map((opt, optIdx) => `
+                        <div class="option-item" data-index="${optIdx}" onclick="selectOption(this, ${idx})">
+                            <span class="option-letter">${String.fromCharCode(65 + optIdx)}</span>
                             <span>${opt}</span>
                         </div>
                     `).join('')}
                 </div>
             </div>
-        `).join('')}
-        <button class="btn btn-primary" onclick="submitQuiz()" style="width: 100%; margin-top: 16px;">
-            <span>✅</span> Submit Answers
-        </button>
-    `;
+        `;
+        container.innerHTML += questionHtml;
+    });
 }
 
-function selectAnswer(questionIndex, answerIndex, element) {
-    userAnswers[questionIndex] = answerIndex;
-    
-    // Update UI
-    document.querySelectorAll(`[data-q="${questionIndex}"]`).forEach(opt => {
-        opt.classList.remove('selected');
+function renderMasterQuestions(master) {
+    const container = document.getElementById('master-questions');
+    container.innerHTML = '<p class="mode-info">Answer these advanced questions to prove your mastery!</p>';
+
+    master.questions.forEach((q, idx) => {
+        const questionHtml = `
+            <div class="master-question" data-index="${idx}">
+                <div class="question-number">Advanced Question ${idx + 1}</div>
+                <div class="question-text">${q.question}</div>
+                <div class="options-list">
+                    ${q.options.map((opt, optIdx) => `
+                        <div class="option-item" data-value="${opt}" onclick="selectMasterOption(this, ${idx})">
+                            <span class="option-letter">${String.fromCharCode(65 + optIdx)}</span>
+                            <span>${opt}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        container.innerHTML += questionHtml;
     });
+}
+
+function renderDetective(detective) {
+    if (!detective) return;
+
+    document.getElementById('case-title').textContent = detective.case_title;
+    document.getElementById('case-scenario').innerHTML = formatStoryContent(detective.scenario);
+
+    const cluesHtml = detective.clues.map(c => `
+        <div class="clue-item">
+            <span class="clue-icon">🔎</span>
+            <span>${c.description}</span>
+        </div>
+    `).join('');
+    document.getElementById('case-clues').innerHTML = cluesHtml;
+
+    // Format question with options
+    const questionText = detective.question.replace(/\n/g, '<br>');
+    document.getElementById('case-question').innerHTML = `<strong>❓ ${questionText}</strong>`;
+}
+
+function selectOption(element, questionIdx) {
+    const question = element.closest('.quiz-question');
+    question.querySelectorAll('.option-item').forEach(opt => opt.classList.remove('selected'));
     element.classList.add('selected');
 }
 
-async function submitQuiz() {
-    if (userAnswers.includes(-1)) {
-        alert('Please answer all questions!');
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/quiz/${currentQuizId}/submit`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ answers: userAnswers })
-        });
-
-        const result = await response.json();
-        showQuizResults(result);
-        
-        // Show XP animation
-        showXPPopup(result.xp_gained);
-        if (result.leveled_up) {
-            showLevelUp(result.level);
-        }
-        
-        // Refresh stats
-        loadStats();
-    } catch (error) {
-        console.error('Error submitting quiz:', error);
-    }
+function selectMasterOption(element, questionIdx) {
+    const question = element.closest('.master-question');
+    question.querySelectorAll('.option-item').forEach(opt => opt.classList.remove('selected'));
+    element.classList.add('selected');
 }
 
-function showQuizResults(result) {
-    document.getElementById('quiz-section').style.display = 'none';
-    const resultsDiv = document.getElementById('quiz-results');
-    resultsDiv.style.display = 'block';
-    
-    const emoji = result.percentage >= 80 ? '🎉' : result.percentage >= 50 ? '👍' : '📚';
-    
-    resultsDiv.innerHTML = `
+function showQuizResults(data) {
+    const container = document.getElementById('quiz-results');
+    const passed = data.passed ? '✅ Passed!' : '❌ Keep trying!';
+
+    container.innerHTML = `
         <div class="result-card">
-            <div class="result-icon">${emoji}</div>
-            <div class="result-title">
-                ${result.perfect ? '🌟 Perfect Score! 🌟' : `${result.correct}/${result.total} Correct`}
-            </div>
-            <div class="result-xp">+${result.xp_earned} XP</div>
-            ${result.bonus_xp > 0 ? `<p style="color: var(--success);">Bonus: +${result.bonus_xp} XP</p>` : ''}
-            <p style="color: var(--text-secondary); margin: 16px 0;">
-                You scored ${result.percentage}%
-            </p>
-            <button class="btn btn-primary" onclick="resetQuiz()">
-                <span>🔄</span> Try Another Quiz
-            </button>
-        </div>
-        
-        <h4 style="margin-top: 32px; margin-bottom: 16px;">📋 Review Answers</h4>
-        ${result.results.map((r, i) => `
-            <div class="quiz-question" style="border-left: 4px solid ${r.is_correct ? 'var(--success)' : 'var(--danger)'};">
-                <div class="question-text" style="margin-bottom: 8px;">${r.question}</div>
-                <p style="color: ${r.is_correct ? 'var(--success)' : 'var(--danger)'};">
-                    ${r.is_correct ? '✅' : '❌'} Your answer: ${r.your_answer}
-                </p>
-                ${!r.is_correct ? `<p style="color: var(--success);">✓ Correct: ${r.correct_answer}</p>` : ''}
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 8px;">
-                    💡 ${r.explanation}
-                </p>
-            </div>
-        `).join('')}
-    `;
-}
-
-function resetQuiz() {
-    document.getElementById('quiz-input-section').style.display = 'block';
-    document.getElementById('quiz-section').style.display = 'none';
-    document.getElementById('quiz-results').style.display = 'none';
-    document.getElementById('document-content').value = '';
-    currentQuiz = null;
-    currentQuizId = null;
-    userAnswers = [];
-}
-
-// ==================== Task Warrior ====================
-
-async function generateQuests() {
-    const goal = document.getElementById('goal-input').value.trim();
-    if (!goal) {
-        alert('Please enter a goal!');
-        return;
-    }
-
-    const context = document.getElementById('goal-context').value.trim();
-    const btn = document.getElementById('generate-quests-btn');
-    btn.innerHTML = '<span class="spinner"></span> Creating Quest Line...';
-    btn.disabled = true;
-
-    try {
-        const response = await fetch('/api/quests/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ goal, context })
-        });
-
-        const data = await response.json();
-        currentQuestLine = data;
-        currentQuestLineId = data.quest_line_id;
-        
-        renderQuests(data);
-        document.getElementById('quest-input-section').style.display = 'none';
-        document.getElementById('quest-section').style.display = 'block';
-    } catch (error) {
-        console.error('Error generating quests:', error);
-        alert('Failed to create quest line. Please try again.');
-    } finally {
-        btn.innerHTML = '<span>⚔️</span> Create Quest Line';
-        btn.disabled = false;
-    }
-}
-
-function renderQuests(data) {
-    const section = document.getElementById('quest-section');
-    section.innerHTML = `
-        <h3 style="margin-bottom: 8px; color: var(--accent-primary);">⚔️ ${data.goal}</h3>
-        <p style="color: var(--text-secondary); margin-bottom: 24px;">
-            Complete all quests to earn <strong>${data.total_xp} XP</strong>!
-        </p>
-        
-        <div id="quests-list">
-            ${data.quests.map(q => renderQuestItem(q)).join('')}
-        </div>
-        
-        ${data.boss_quest ? `
-            <h4 style="margin-top: 24px; margin-bottom: 12px; color: #a855f7;">👹 BOSS QUEST</h4>
-            ${renderQuestItem(data.boss_quest, true)}
-        ` : ''}
-        
-        <button class="btn btn-secondary" onclick="resetQuests()" style="width: 100%; margin-top: 24px;">
-            <span>🔄</span> New Quest Line
-        </button>
-    `;
-}
-
-function renderQuestItem(quest, isBoss = false) {
-    const diffClass = quest.difficulty.toLowerCase();
-    return `
-        <div class="quest-item ${quest.completed ? 'completed' : ''}" id="quest-${quest.id}">
-            <div class="quest-checkbox ${quest.completed ? 'checked' : ''}" 
-                 onclick="completeQuest(${quest.id})"
-                 ${quest.completed ? 'style="pointer-events: none;"' : ''}>
-                ${quest.completed ? '✓' : ''}
-            </div>
-            <div class="quest-content">
-                <div class="quest-title">${isBoss ? '👹 ' : ''}${quest.title}</div>
-                <div class="quest-description">${quest.description}</div>
-            </div>
-            <span class="quest-difficulty difficulty-${diffClass}">${quest.difficulty}</span>
-            <span class="quest-xp">+${quest.xp_reward} XP</span>
+            <div class="result-icon">${data.passed ? '🎉' : '📚'}</div>
+            <div class="result-title">${passed}</div>
+            <div class="result-stats">${data.correct}/${data.total} correct (${data.percentage}%)</div>
+            <div class="result-xp">+${data.xp_earned} XP</div>
+            <p>Moving to Master Practice...</p>
         </div>
     `;
+    container.style.display = 'block';
+    document.getElementById('submit-quiz-btn').style.display = 'none';
 }
 
-async function completeQuest(questId) {
-    try {
-        const response = await fetch(`/api/quests/${currentQuestLineId}/complete`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ quest_id: questId })
-        });
+function showMasterResults(data) {
+    const container = document.getElementById('master-results');
+    const mastered = data.mastered ? '🏆 Mastered!' : '📖 Good effort!';
 
-        const result = await response.json();
-        
-        if (result.completed) {
-            // Update UI
-            const questEl = document.getElementById(`quest-${questId}`);
-            questEl.classList.add('completed');
-            const checkbox = questEl.querySelector('.quest-checkbox');
-            checkbox.classList.add('checked');
-            checkbox.innerHTML = '✓';
-            checkbox.style.pointerEvents = 'none';
-            
-            // Show XP animation
-            showXPPopup(result.xp_earned);
-            if (result.leveled_up) {
-                showLevelUp(result.level);
-            }
-            
-            // Refresh stats
-            loadStats();
+    container.innerHTML = `
+        <div class="result-card">
+            <div class="result-icon">${data.mastered ? '🏆' : '💪'}</div>
+            <div class="result-title">${mastered}</div>
+            <div class="result-stats">${data.correct}/${data.total} correct (${data.percentage}%)</div>
+            <div class="result-xp">+${data.xp_earned} XP</div>
+            <p>Get ready for Detective Mode...</p>
+        </div>
+    `;
+    container.style.display = 'block';
+    document.getElementById('submit-master-btn').style.display = 'none';
+}
+
+function showDetectiveResults(data) {
+    const container = document.getElementById('detective-results');
+    const solved = data.solved ? '🎉 Case Solved!' : '🔍 Close, but not quite!';
+
+    container.innerHTML = `
+        <div class="result-card">
+            <div class="result-icon">${data.solved ? '🕵️' : '🤔'}</div>
+            <div class="result-title">${solved}</div>
+            <div class="result-stats">Answer: ${data.correct_answer}</div>
+            <div class="result-explanation">${data.explanation}</div>
+            <div class="result-xp">+${data.xp_earned} XP</div>
+        </div>
+    `;
+    container.style.display = 'block';
+    document.getElementById('solve-case-btn').style.display = 'none';
+}
+
+function activateStep(stepName) {
+    const steps = ['story', 'quiz', 'master', 'detective'];
+    const currentIdx = steps.indexOf(stepName);
+
+    steps.forEach((step, idx) => {
+        const el = document.getElementById(`step-${step}`);
+        if (!el) return;
+        el.classList.remove('active', 'completed');
+        if (idx < currentIdx) {
+            el.classList.add('completed');
+        } else if (idx === currentIdx) {
+            el.classList.add('active');
         }
-    } catch (error) {
-        console.error('Error completing quest:', error);
-    }
+    });
 }
 
-function resetQuests() {
-    document.getElementById('quest-input-section').style.display = 'block';
-    document.getElementById('quest-section').style.display = 'none';
-    document.getElementById('goal-input').value = '';
-    document.getElementById('goal-context').value = '';
-    currentQuestLine = null;
-    currentQuestLineId = null;
-}
+function renderAchievements(unlockedList) {
+    const container = document.getElementById('achievements-grid');
+    const unlockedIds = unlockedList.map(a => a.id);
 
-// ==================== Code Arena ====================
-
-function selectDifficulty(diff, btn) {
-    selectedDifficulty = diff;
-    document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-}
-
-function selectTopic(topic, btn) {
-    selectedTopic = topic;
-    document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-}
-
-async function generateChallenge() {
-    const btn = document.getElementById('generate-challenge-btn');
-    btn.innerHTML = '<span class="spinner"></span> Generating Challenge...';
-    btn.disabled = true;
-
-    try {
-        const response = await fetch('/api/challenges/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ difficulty: selectedDifficulty, topic: selectedTopic })
-        });
-
-        const data = await response.json();
-        currentChallenge = data;
-        currentChallengeId = data.challenge_id;
-        
-        renderChallenge(data);
-        document.getElementById('challenge-select-section').style.display = 'none';
-        document.getElementById('challenge-section').style.display = 'block';
-    } catch (error) {
-        console.error('Error generating challenge:', error);
-        alert('Failed to generate challenge. Please try again.');
-    } finally {
-        btn.innerHTML = '<span>⚡</span> Start Challenge';
-        btn.disabled = false;
-    }
-}
-
-function renderChallenge(challenge) {
-    const section = document.getElementById('challenge-section');
-    section.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="color: var(--accent-primary);">${challenge.title}</h3>
-            <span class="quest-difficulty difficulty-${challenge.difficulty.toLowerCase()}">${challenge.difficulty}</span>
-        </div>
-        
-        <p style="color: var(--text-secondary); margin-bottom: 20px;">
-            ${challenge.description}
-        </p>
-        
-        <p style="color: var(--accent-primary); margin-bottom: 24px;">
-            🎯 Reward: <strong>+${challenge.xp_reward} XP</strong> (bonus for optimal solution!)
-        </p>
-        
-        <div class="code-editor">
-            <div class="code-editor-header">
-                <span class="dot dot-red"></span>
-                <span class="dot dot-yellow"></span>
-                <span class="dot dot-green"></span>
-                <span style="margin-left: 12px;">solution.py</span>
+    let html = '';
+    for (const [id, achievement] of Object.entries(ALL_ACHIEVEMENTS)) {
+        const isUnlocked = unlockedIds.includes(id);
+        html += `
+            <div class="achievement-item ${isUnlocked ? '' : 'locked'}">
+                <div class="achievement-icon">${achievement.icon}</div>
+                <div class="achievement-name">${achievement.name}</div>
             </div>
-            <textarea class="code-textarea" id="code-input">${challenge.starter_code}</textarea>
-        </div>
-        
-        <div class="hints-container">
-            <h4 style="margin-bottom: 12px;">💡 Hints</h4>
-            ${challenge.hints.map((hint, i) => `
-                <div class="hint-item">
-                    <span class="hint-icon">💡</span>
-                    <span>${hint}</span>
-                </div>
-            `).join('')}
-        </div>
-        
-        <div style="display: flex; gap: 12px; margin-top: 24px;">
-            <button class="btn btn-primary" onclick="submitCode()" style="flex: 1;">
-                <span>🚀</span> Submit Solution
-            </button>
-            <button class="btn btn-secondary" onclick="resetChallenge()">
-                <span>🔄</span> New Challenge
-            </button>
-        </div>
-        
-        <div id="challenge-result" style="margin-top: 24px;"></div>
-    `;
+        `;
+    }
+
+    container.innerHTML = html;
 }
 
-async function submitCode() {
-    const code = document.getElementById('code-input').value;
-    
-    try {
-        const response = await fetch(`/api/challenges/${currentChallengeId}/submit`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code })
-        });
+// ==================== TTS ====================
 
-        const result = await response.json();
-        showChallengeResult(result);
-        
-        if (result.passed) {
-            showXPPopup(result.xp_earned + (result.bonus_xp || 0));
-            if (result.leveled_up) {
-                showLevelUp(result.level);
-            }
-            loadStats();
-        }
-    } catch (error) {
-        console.error('Error submitting code:', error);
+function toggleTTS() {
+    if (isSpeaking) {
+        stopTTS();
+    } else {
+        startTTS();
     }
 }
 
-function showChallengeResult(result) {
-    const resultDiv = document.getElementById('challenge-result');
-    const icon = result.passed ? '✅' : '❌';
-    const bgColor = result.passed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
-    const borderColor = result.passed ? 'var(--success)' : 'var(--danger)';
-    
-    resultDiv.innerHTML = `
-        <div style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: var(--radius-lg); padding: 24px;">
-            <h4 style="margin-bottom: 12px;">${icon} ${result.passed ? 'Challenge Complete!' : 'Not Quite Right'}</h4>
-            <p style="color: var(--text-secondary);">${result.feedback}</p>
-            ${result.passed ? `
-                <p style="color: var(--success); margin-top: 12px; font-weight: 600;">
-                    +${result.xp_earned} XP earned!
-                    ${result.bonus_xp > 0 ? `(+${result.bonus_xp} bonus!)` : ''}
-                </p>
-            ` : ''}
-        </div>
-    `;
+function startTTS() {
+    const content = document.getElementById('story-content').innerText;
+    if (!content || !('speechSynthesis' in window)) return;
+
+    ttsUtterance = new SpeechSynthesisUtterance(content);
+    ttsUtterance.rate = 0.9;
+    ttsUtterance.onend = () => {
+        isSpeaking = false;
+        document.getElementById('tts-btn').innerHTML = '<span>🔊</span> Listen';
+    };
+
+    speechSynthesis.speak(ttsUtterance);
+    isSpeaking = true;
+    document.getElementById('tts-btn').innerHTML = '<span>🔇</span> STOP';
 }
 
-function resetChallenge() {
-    document.getElementById('challenge-select-section').style.display = 'block';
-    document.getElementById('challenge-section').style.display = 'none';
-    currentChallenge = null;
-    currentChallengeId = null;
+function stopTTS() {
+    speechSynthesis.cancel();
+    isSpeaking = false;
+    document.getElementById('tts-btn').innerHTML = '<span>🔊</span> LISTEN';
 }
 
-// ==================== Animations ====================
+// ==================== Utilities ====================
 
-function showXPPopup(xp) {
+function showLoading(text = 'Loading...') {
+    document.getElementById('loading-text').textContent = text;
+    document.getElementById('loading-overlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loading-overlay').style.display = 'none';
+}
+
+function showXPPopup(amount) {
     const popup = document.getElementById('xp-popup');
-    document.getElementById('xp-popup-value').textContent = `+${xp} XP`;
+    const value = document.getElementById('xp-popup-value');
+
+    value.textContent = `+${amount} XP`;
     popup.style.display = 'block';
-    
+
     setTimeout(() => {
         popup.style.display = 'none';
     }, 2000);
 }
 
-function showLevelUp(level) {
-    const overlay = document.getElementById('level-up-overlay');
-    document.getElementById('new-level').textContent = level;
-    overlay.classList.add('active');
-    
-    setTimeout(() => {
-        overlay.classList.remove('active');
-    }, 3000);
+// ==================== Achievements Modal ====================
+
+function showAchievements() {
+    const modal = document.getElementById('achievements-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
 }
 
-// Close modals on overlay click
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            overlay.classList.remove('active');
-        }
-    });
-});
-
-// Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+function closeAchievements(event) {
+    // If called from overlay click, check if click was on overlay itself
+    if (event && event.target !== event.currentTarget) return;
+    const modal = document.getElementById('achievements-modal');
+    if (modal) {
+        modal.style.display = 'none';
     }
-});
+}
+
+// ==================== Level Progression ====================
+
+function updateSidebarLevels(currentLvl) {
+    // Update sidebar level indicators
+    for (let i = 1; i <= 3; i++) {
+        const el = document.getElementById(`sidebar-lvl-${i}`);
+        if (el) {
+            el.classList.remove('active', 'completed', 'locked');
+            if (i < currentLvl) {
+                el.classList.add('completed');
+                el.textContent = `✓ ${i}`;
+            } else if (i === currentLvl) {
+                el.classList.add('active');
+                el.textContent = `LVL ${i}`;
+            } else {
+                el.classList.add('locked');
+                el.textContent = `🔒 ${i}`;
+            }
+        }
+    }
+}
+
+function updateLevelProgress(completedLevel) {
+    // Update completion screen level dots
+    for (let i = 1; i <= 3; i++) {
+        const dot = document.getElementById(`lvl-${i}`);
+        if (dot) {
+            dot.classList.remove('completed', 'unlocked');
+            if (i <= completedLevel) {
+                dot.classList.add('completed');
+            } else if (i === completedLevel + 1) {
+                dot.classList.add('unlocked');
+            }
+        }
+    }
+
+    // Update completion text
+    document.getElementById('completed-level').textContent = completedLevel;
+
+    // Show/hide next level button
+    const nextBtn = document.getElementById('next-level-btn');
+    const nextNum = document.getElementById('next-level-num');
+
+    if (completedLevel < maxLevel) {
+        nextBtn.style.display = 'inline-flex';
+        nextNum.textContent = completedLevel + 1;
+        document.getElementById('completion-message').textContent = `Level ${completedLevel + 1} is now unlocked!`;
+    } else {
+        nextBtn.style.display = 'none';
+        document.getElementById('completion-message').textContent = "🎉 You've mastered all levels!";
+    }
+}
+
+async function startNextLevel() {
+    if (!currentSession || currentLevel >= maxLevel) return;
+
+    currentLevel++;
+    const topic = currentSession.topic;
+
+    showLoading(`Loading Level ${currentLevel}...`);
+
+    try {
+        // Start new session at next level (AI generates harder content)
+        const response = await fetch('/api/session/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic: `${topic} (Level ${currentLevel} - Advanced)` })
+        });
+
+        const data = await response.json();
+
+        if (data.error || !response.ok) {
+            hideLoading();
+            alert(data.message || 'Unable to load next level. Try again!');
+            return;
+        }
+
+        currentSession = {
+            id: data.session_id,
+            topic: topic,
+            aiGenerated: data.ai_generated,
+            source: data.source
+        };
+
+        // Reset UI for new level
+        selectedQuizAnswers = [];
+        selectedMasterAnswers = [];
+
+        // Show story for new level
+        document.getElementById('story-title').textContent = data.story.title;
+        document.getElementById('story-content').innerHTML = formatStoryContent(data.story.content);
+
+        // Reset all sections
+        document.querySelectorAll('.mode-section').forEach(section => {
+            section.style.display = 'none';
+        });
+        document.getElementById('story-section').style.display = 'block';
+
+        // Reset progress steps
+        document.querySelectorAll('.progress-step-v').forEach(step => {
+            step.classList.remove('completed', 'active');
+        });
+
+        activateStep('story');
+        updateSidebarLevels(currentLevel);
+        hideLoading();
+
+        console.log(`✅ Started Level ${currentLevel}`);
+
+    } catch (error) {
+        hideLoading();
+        alert('Error loading next level. Please try again!');
+        console.error(error);
+    }
+}

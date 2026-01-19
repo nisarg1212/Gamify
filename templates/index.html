@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamify AI - Transform Everything into a Game</title>
-    <meta name="description" content="Gamify your learning, goals, and coding with AI-powered gamification">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
+    <title>Gamify AI ⋆ Start Your Learning Quest</title>
+    <meta name="description"
+        content="Transform any topic into an epic 8-bit learning adventure! Earn XP, unlock achievements, and master new skills.">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 
@@ -17,10 +18,21 @@
         <div class="container header-content">
             <div class="logo">
                 <img src="/static/gamify_logo.png" alt="Gamify AI" class="logo-image">
+                <span class="logo-text">GAMIFY</span>
             </div>
 
             <div class="stats-bar">
-                <div class="level-badge" id="level-badge">1</div>
+                <div class="stat-item">
+                    <span class="stat-icon">🔥</span>
+                    <span class="stat-value" id="streak-count">0</span>
+                    <span class="stat-label">Streak</span>
+                </div>
+
+                <div class="stat-item clickable" onclick="showAchievements()">
+                    <span class="stat-icon">🏆</span>
+                    <span class="stat-value" id="achievement-count">0</span>
+                    <span class="stat-label">Badges</span>
+                </div>
 
                 <div class="xp-bar-container">
                     <div class="xp-bar-header">
@@ -32,17 +44,7 @@
                     </div>
                 </div>
 
-                <div class="stat-item">
-                    <span class="stat-icon">🔥</span>
-                    <span class="stat-value" id="streak-count">0</span>
-                    <span class="stat-label">Streak</span>
-                </div>
-
-                <div class="stat-item">
-                    <span class="stat-icon">🏆</span>
-                    <span class="stat-value" id="achievement-count">0</span>
-                    <span class="stat-label">Achievements</span>
-                </div>
+                <div class="level-badge" id="level-badge">1</div>
             </div>
         </div>
     </header>
@@ -50,208 +52,184 @@
     <!-- Main Content -->
     <main class="main">
         <div class="container">
-            <!-- Welcome Section -->
-            <h1 class="section-title">
-                <span>⚡</span>
-                Choose Your Adventure
-            </h1>
+            <!-- Topic Input Section -->
+            <div id="topic-section" class="topic-section">
+                <h1 class="hero-title">
+                    <span class="gradient-text">START YOUR</span>
+                    <br>LEARNING QUEST
+                </h1>
+                <p class="hero-subtitle">Choose a featured quest or enter any topic! 🎮</p>
 
-            <!-- Modules Grid -->
-            <div class="modules-grid">
-                <!-- Document Quest -->
-                <div class="module-card" onclick="openModule('document-quest')">
-                    <div class="module-icon">📚</div>
-                    <h2 class="module-title">Document Quest</h2>
-                    <p class="module-description">
-                        Upload any text or document and transform it into an interactive quiz.
-                        Test your knowledge and earn XP!
-                    </p>
-                    <div class="module-stats">
-                        <span class="module-stat">
-                            <span>🎯</span> 10-50 XP per quiz
-                        </span>
-                        <span class="module-stat">
-                            <span>❓</span> AI-generated questions
-                        </span>
-                    </div>
+                <!-- Featured Quests -->
+                <h2 class="section-title featured-title">
+                    <span>⭐</span> FEATURED QUESTS
+                </h2>
+                <div class="featured-quests-grid" id="featured-quests">
+                    <!-- Populated by JS -->
                 </div>
 
-                <!-- Task Warrior -->
-                <div class="module-card" onclick="openModule('task-warrior')">
-                    <div class="module-icon">⚔️</div>
-                    <h2 class="module-title">Task Warrior</h2>
-                    <p class="module-description">
-                        Transform your goals into epic RPG quests! Break down big objectives
-                        into achievable missions with XP rewards.
-                    </p>
-                    <div class="module-stats">
-                        <span class="module-stat">
-                            <span>⚔️</span> Epic quest system
-                        </span>
-                        <span class="module-stat">
-                            <span>👹</span> Boss challenges
-                        </span>
-                    </div>
+                <div class="custom-topic-divider">
+                    <span>OR ENTER YOUR OWN TOPIC</span>
                 </div>
 
-                <!-- Code Arena -->
-                <div class="module-card" onclick="openModule('code-arena')">
-                    <div class="module-icon">💻</div>
-                    <h2 class="module-title">Code Arena</h2>
-                    <p class="module-description">
-                        Challenge yourself with AI-generated coding problems.
-                        Level up your programming skills and conquer algorithms!
-                    </p>
-                    <div class="module-stats">
-                        <span class="module-stat">
-                            <span>🧠</span> Adaptive difficulty
-                        </span>
-                        <span class="module-stat">
-                            <span>✨</span> Bonus XP for optimal code
-                        </span>
-                    </div>
+                <div class="topic-input-wrapper">
+                    <input type="text" id="topic-input" class="topic-input"
+                        placeholder="Enter any topic... (e.g., Space Travel, History, Music)">
+                    <button class="btn btn-primary btn-large" onclick="startLearning()" id="start-btn">
+                        <span>⚔️</span> BEGIN QUEST
+                    </button>
                 </div>
             </div>
 
-            <!-- Achievements Section -->
-            <h2 class="section-title">
-                <span>🏆</span>
-                Achievements
-            </h2>
-            <div class="achievements-grid" id="achievements-grid">
-                <!-- Populated by JS -->
-            </div>
+            <!-- Learning Session Container (hidden initially) -->
+            <div id="session-container" class="session-container" style="display: none;">
+                <!-- Vertical Progress Sidebar -->
+                <aside class="session-sidebar">
+                    <div class="sidebar-topic" id="sidebar-topic"></div>
+
+                    <!-- Level Indicator -->
+                    <div class="sidebar-levels">
+                        <div class="sidebar-level active" id="sidebar-lvl-1">LVL 1</div>
+                        <div class="sidebar-level locked" id="sidebar-lvl-2">🔒 2</div>
+                        <div class="sidebar-level locked" id="sidebar-lvl-3">🔒 3</div>
+                    </div>
+
+                    <div class="progress-steps-vertical">
+                        <div class="progress-step-v completed" id="step-story">
+                            <span class="step-icon-v">📖</span>
+                            <span class="step-label-v">STORY</span>
+                        </div>
+                        <div class="progress-line-v"></div>
+                        <div class="progress-step-v" id="step-quiz">
+                            <span class="step-icon-v">❓</span>
+                            <span class="step-label-v">QUIZ</span>
+                        </div>
+                        <div class="progress-line-v"></div>
+                        <div class="progress-step-v" id="step-master">
+                            <span class="step-icon-v">🏆</span>
+                            <span class="step-label-v">MASTER</span>
+                        </div>
+                        <div class="progress-line-v"></div>
+                        <div class="progress-step-v" id="step-detective">
+                            <span class="step-icon-v">🔍</span>
+                            <span class="step-label-v">DETECTIVE</span>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Main Content Area -->
+                <div class="session-main">
+
+                    <!-- Story Mode -->
+                    <div id="story-mode" class="mode-section">
+                        <div class="mode-header">
+                            <h3><span>📖</span> Story Mode</h3>
+                            <div class="mode-controls">
+                                <button class="btn btn-secondary btn-sm" onclick="toggleTTS()" id="tts-btn">
+                                    <span>🔊</span> LISTEN
+                                </button>
+                            </div>
+                        </div>
+                        <div class="story-card">
+                            <h4 class="story-title" id="story-title"></h4>
+                            <div class="story-content" id="story-content"></div>
+                        </div>
+                        <button class="btn btn-primary" onclick="completeStory()" id="complete-story-btn">
+                            <span>✅</span> QUEST COMPLETE → NEXT STAGE
+                        </button>
+                    </div>
+
+                    <!-- Quiz Mode -->
+                    <div id="quiz-mode" class="mode-section" style="display: none;">
+                        <div class="mode-header">
+                            <h3><span>❓</span> Quick Test</h3>
+                            <span class="xp-badge" id="quiz-xp">+50 XP possible</span>
+                        </div>
+                        <div id="quiz-questions"></div>
+                        <button class="btn btn-primary" onclick="submitQuiz()" id="submit-quiz-btn">
+                            <span>⚡</span> SUBMIT ANSWERS
+                        </button>
+                        <div id="quiz-results" style="display: none;"></div>
+                    </div>
+
+                    <!-- Master Mode -->
+                    <div id="master-mode" class="mode-section" style="display: none;">
+                        <div class="mode-header">
+                            <h3><span>🏆</span> Master Practice</h3>
+                            <span class="xp-badge" id="master-xp">+150 XP possible</span>
+                        </div>
+                        <div id="master-questions"></div>
+                        <button class="btn btn-primary" onclick="submitMaster()" id="submit-master-btn">
+                            <span>🎯</span> SUBMIT ANSWERS
+                        </button>
+                        <div id="master-results" style="display: none;"></div>
+                    </div>
+
+                    <!-- Detective Mode -->
+                    <div id="detective-mode" class="mode-section" style="display: none;">
+                        <div class="mode-header">
+                            <h3><span>🔍</span> Detective Mode</h3>
+                            <span class="xp-badge" id="detective-xp">+100 XP possible</span>
+                        </div>
+                        <div class="detective-case">
+                            <h4 class="case-title" id="case-title"></h4>
+                            <div class="case-scenario" id="case-scenario"></div>
+                            <div class="clues-section">
+                                <h5>🔎 Clues</h5>
+                                <div id="case-clues"></div>
+                            </div>
+                            <div class="case-question" id="case-question"></div>
+                            <input type="text" class="form-input" id="detective-answer"
+                                placeholder="Enter your answer...">
+                        </div>
+                        <button class="btn btn-primary" onclick="solveCase()" id="solve-case-btn">
+                            <span>🔐</span> CRACK THE CASE
+                        </button>
+                        <div id="detective-results" style="display: none;"></div>
+                    </div>
+
+                    <!-- Session Complete -->
+                    <div id="session-complete" class="mode-section" style="display: none;">
+                        <div class="completion-card">
+                            <div class="completion-icon">🎉</div>
+                            <h3>LEVEL <span id="completed-level">1</span> COMPLETE!</h3>
+                            <div class="completion-xp" id="total-xp-earned">+0 XP</div>
+                            <p id="completion-message">You've mastered this level!</p>
+
+                            <!-- Level Progress -->
+                            <div class="level-progress-bar">
+                                <div class="level-dot completed" id="lvl-1">1</div>
+                                <div class="level-line"></div>
+                                <div class="level-dot" id="lvl-2">2</div>
+                                <div class="level-line"></div>
+                                <div class="level-dot" id="lvl-3">3</div>
+                            </div>
+
+                            <div class="completion-buttons">
+                                <button class="btn btn-secondary" onclick="newAdventure()">
+                                    <span>🏠</span> HOME
+                                </button>
+                                <button class="btn btn-primary btn-large" id="next-level-btn" onclick="startNextLevel()"
+                                    style="display: none;">
+                                    <span>⚔️</span> LEVEL <span id="next-level-num">2</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- end session-main -->
+            </div><!-- end session-container -->
         </div>
     </main>
 
-    <!-- Document Quest Modal -->
-    <div class="modal-overlay" id="document-quest-modal">
-        <div class="modal">
+    <!-- Achievements Modal -->
+    <div id="achievements-modal" class="modal-overlay" style="display: none;" onclick="closeAchievements(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <h3 class="modal-title">
-                    <span>📚</span>
-                    Document Quest
-                </h3>
-                <button class="modal-close" onclick="closeModal('document-quest-modal')">&times;</button>
+                <h2><span>🏆</span> ACHIEVEMENTS</h2>
+                <button class="modal-close" onclick="closeAchievements()">&times;</button>
             </div>
-            <div class="modal-body" id="document-quest-body">
-                <div id="quiz-input-section">
-                    <div class="form-group">
-                        <label class="form-label">Paste your text or document content</label>
-                        <textarea class="form-textarea" id="document-content"
-                            placeholder="Paste any text here - an article, notes, documentation, or anything you want to learn about..."></textarea>
-                    </div>
-                    <button class="btn btn-primary" onclick="generateQuiz()" id="generate-quiz-btn">
-                        <span>✨</span>
-                        Generate Quiz
-                    </button>
-                </div>
-                <div id="quiz-section" style="display: none;">
-                    <!-- Quiz content populated by JS -->
-                </div>
-                <div id="quiz-results" style="display: none;">
-                    <!-- Results populated by JS -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Task Warrior Modal -->
-    <div class="modal-overlay" id="task-warrior-modal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">
-                    <span>⚔️</span>
-                    Task Warrior
-                </h3>
-                <button class="modal-close" onclick="closeModal('task-warrior-modal')">&times;</button>
-            </div>
-            <div class="modal-body" id="task-warrior-body">
-                <div id="quest-input-section">
-                    <div class="form-group">
-                        <label class="form-label">What's your goal?</label>
-                        <input type="text" class="form-input" id="goal-input"
-                            placeholder="e.g., Learn Python, Build a portfolio, Get fit...">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Additional context (optional)</label>
-                        <textarea class="form-textarea" id="goal-context"
-                            placeholder="Any specific details about your goal..." style="min-height: 80px;"></textarea>
-                    </div>
-                    <button class="btn btn-primary" onclick="generateQuests()" id="generate-quests-btn">
-                        <span>⚔️</span>
-                        Create Quest Line
-                    </button>
-                </div>
-                <div id="quest-section" style="display: none;">
-                    <!-- Quest content populated by JS -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Code Arena Modal -->
-    <div class="modal-overlay" id="code-arena-modal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">
-                    <span>💻</span>
-                    Code Arena
-                </h3>
-                <button class="modal-close" onclick="closeModal('code-arena-modal')">&times;</button>
-            </div>
-            <div class="modal-body" id="code-arena-body">
-                <div id="challenge-select-section">
-                    <label class="form-label">Select Difficulty</label>
-                    <div class="difficulty-selector">
-                        <button class="difficulty-btn active" data-diff="Easy" onclick="selectDifficulty('Easy', this)">
-                            🟢 Easy (+20 XP)
-                        </button>
-                        <button class="difficulty-btn" data-diff="Medium" onclick="selectDifficulty('Medium', this)">
-                            🟡 Medium (+40 XP)
-                        </button>
-                        <button class="difficulty-btn" data-diff="Hard" onclick="selectDifficulty('Hard', this)">
-                            🔴 Hard (+70 XP)
-                        </button>
-                    </div>
-
-                    <label class="form-label">Select Topic</label>
-                    <div class="topic-grid" id="topic-grid">
-                        <button class="topic-btn active" data-topic="general" onclick="selectTopic('general', this)">
-                            <span class="topic-icon">🎯</span>
-                            General
-                        </button>
-                        <button class="topic-btn" data-topic="strings" onclick="selectTopic('strings', this)">
-                            <span class="topic-icon">📝</span>
-                            Strings
-                        </button>
-                        <button class="topic-btn" data-topic="arrays" onclick="selectTopic('arrays', this)">
-                            <span class="topic-icon">📊</span>
-                            Arrays
-                        </button>
-                        <button class="topic-btn" data-topic="math" onclick="selectTopic('math', this)">
-                            <span class="topic-icon">🔢</span>
-                            Math
-                        </button>
-                        <button class="topic-btn" data-topic="algorithms" onclick="selectTopic('algorithms', this)">
-                            <span class="topic-icon">⚡</span>
-                            Algorithms
-                        </button>
-                        <button class="topic-btn" data-topic="data_structures"
-                            onclick="selectTopic('data_structures', this)">
-                            <span class="topic-icon">🏗️</span>
-                            Data Structures
-                        </button>
-                    </div>
-
-                    <button class="btn btn-primary" onclick="generateChallenge()" id="generate-challenge-btn">
-                        <span>⚡</span>
-                        Start Challenge
-                    </button>
-                </div>
-                <div id="challenge-section" style="display: none;">
-                    <!-- Challenge content populated by JS -->
-                </div>
+            <div class="achievements-grid" id="achievements-grid">
+                <!-- Populated by JS -->
             </div>
         </div>
     </div>
@@ -266,6 +244,14 @@
         <div class="level-up-content">
             <div class="level-up-text">🎉 LEVEL UP! 🎉</div>
             <div class="level-up-number" id="new-level">2</div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p id="loading-text">Generating your adventure...</p>
         </div>
     </div>
 
