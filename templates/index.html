@@ -79,6 +79,26 @@
                         <span>⚔️</span> BEGIN QUEST
                     </button>
                 </div>
+
+                <!-- API Key Section (for custom topics) -->
+                <div class="api-key-section">
+                    <button class="api-key-toggle" onclick="toggleApiKeySection()">
+                        <span id="api-key-arrow">▶</span> Use your own API key (for custom topics)
+                    </button>
+                    <div id="api-key-container" class="api-key-container" style="display: none;">
+                        <p class="api-key-info">
+                            ✨ Featured quests work without a key!<br>
+                            For custom topics, get a free API key from
+                            <a href="https://openrouter.ai" target="_blank">OpenRouter.ai</a>
+                        </p>
+                        <div class="api-key-input-wrapper">
+                            <input type="password" id="api-key-input" class="api-key-input" placeholder="sk-or-v1-..."
+                                onchange="saveApiKey()">
+                            <button class="btn btn-sm" onclick="toggleKeyVisibility()">👁️</button>
+                        </div>
+                        <div id="api-key-status" class="api-key-status"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Learning Session Container (hidden initially) -->

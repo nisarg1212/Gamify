@@ -31,12 +31,54 @@ document.addEventListener('DOMContentLoaded', () => {
     loadStats();
     loadFeaturedQuests();
     renderAchievements([]);
+    loadApiKey();
 
     // Enter key to start
     document.getElementById('topic-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') startLearning();
     });
 });
+
+// ==================== API Key Management ====================
+
+function toggleApiKeySection() {
+    const container = document.getElementById('api-key-container');
+    const arrow = document.getElementById('api-key-arrow');
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        arrow.style.transform = 'rotate(90deg)';
+    } else {
+        container.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+    }
+}
+
+function saveApiKey() {
+    const apiKey = document.getElementById('api-key-input').value.trim();
+    if (apiKey) {
+        localStorage.setItem('openrouter_api_key', apiKey);
+        const status = document.getElementById('api-key-status');
+        status.textContent = '✓ API key saved!';
+        status.className = 'api-key-status saved';
+        setTimeout(() => { status.textContent = ''; }, 2000);
+    }
+}
+
+function loadApiKey() {
+    const savedKey = localStorage.getItem('openrouter_api_key');
+    if (savedKey) {
+        document.getElementById('api-key-input').value = savedKey;
+    }
+}
+
+function getUserApiKey() {
+    return localStorage.getItem('openrouter_api_key') || '';
+}
+
+function toggleKeyVisibility() {
+    const input = document.getElementById('api-key-input');
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
 
 // Activate a progress step in the sidebar
 function activateStep(stepName) {
@@ -125,10 +167,11 @@ async function startLearning() {
     showLoading('Generating your adventure...');
 
     try {
+        const userApiKey = getUserApiKey();
         const response = await fetch('/api/session/start', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic })
+            body: JSON.stringify({ topic, api_key: userApiKey || undefined })
         });
 
         const data = await response.json();

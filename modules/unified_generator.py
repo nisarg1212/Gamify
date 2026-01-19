@@ -24,7 +24,7 @@ MODELS = [
     "meta-llama/llama-3.3-70b-instruct:free",
 ]
 
-def generate_all_content(topic: str) -> dict:
+def generate_all_content(topic: str, user_api_key: str = None) -> dict:
     """Generate all learning content - uses pre-built quests or AI with fallback"""
     
     # Check if this matches a featured quest
@@ -43,10 +43,25 @@ def generate_all_content(topic: str) -> dict:
         }
     
     # Try AI generation with multiple models
-    return generate_with_fallback(topic)
+    return generate_with_fallback(topic, user_api_key)
 
 
-def generate_with_fallback(topic: str) -> dict:
+def get_client(user_api_key: str = None):
+    """Get OpenAI client - tries server key first, then user key"""
+    # Try server key first (for judges), then user key as fallback
+    server_key = os.getenv("OPENROUTER_API_KEY")
+    api_key = server_key or user_api_key
+    
+    if not api_key:
+        return None
+    return OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=api_key,
+        timeout=httpx.Timeout(15.0, connect=5.0)
+    )
+
+
+def generate_with_fallback(topic: str, user_api_key: str = None) -> dict:
     """Try multiple models, fall back if one fails"""
     
     prompt = f"""Create a complete learning experience about: {topic}
@@ -86,11 +101,19 @@ Return ONLY valid JSON in this exact format:
   }}
 }}"""
 
+    # Get client with user or server API key
+    api_client = get_client(user_api_key)
+    if not api_client:
+        return {
+            "error": True,
+            "message": "No API key available. Please enter your OpenRouter API key for custom topics, or try a Featured Quest!"
+        }
+
     for i, model in enumerate(MODELS):
         try:
             print(f"[AI] Trying model {i+1}/{len(MODELS)}: {model}")
             
-            response = client.chat.completions.create(
+            response = api_client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=3000

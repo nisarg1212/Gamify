@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 # Load environment variables
 load_dotenv()
@@ -51,6 +51,7 @@ active_sessions = {}
 
 class TopicRequest(BaseModel):
     topic: str
+    api_key: Optional[str] = None
 
 class QuizAnswers(BaseModel):
     answers: List[int]
@@ -91,7 +92,7 @@ async def start_session(data: TopicRequest):
     session_id = str(uuid.uuid4())[:8]
     
     # Generate ALL content in one API call
-    content = generate_all_content(data.topic)
+    content = generate_all_content(data.topic, user_api_key=data.api_key)
     
     # Check if generation failed
     if content.get("error"):
