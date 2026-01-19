@@ -9,12 +9,12 @@ from openai import OpenAI
 from gamification.models import Story, Quiz, QuizQuestion, MasterPractice, MasterQuestion, DetectiveCase, Clue
 from modules.prebuilt_quests import is_featured_quest, get_featured_quest
 
-# Load environment variables and configure OpenRouter with SHORT timeout
+# Load environment variables and configure OpenRouter with LONG timeout
 load_dotenv()
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY"),
-    timeout=httpx.Timeout(15.0, connect=5.0)  # 15 second timeout, 5 second connect
+    timeout=httpx.Timeout(60.0, connect=10.0)  # 60 second timeout, 10 second connect
 )
 
 # Models to try in order (free tier - Jan 2026)
@@ -57,7 +57,7 @@ def get_client(user_api_key: str = None):
     return OpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=api_key,
-        timeout=httpx.Timeout(15.0, connect=5.0)
+        timeout=httpx.Timeout(60.0, connect=10.0)
     )
 
 
@@ -134,7 +134,7 @@ Return ONLY valid JSON in this exact format:
                 return result
                 
         except httpx.TimeoutException:
-            print(f"[AI] Model {model} timed out (15s)")
+            print(f"[AI] Model {model} timed out (60s)")
             continue
         except Exception as e:
             print(f"[AI] Model {model} failed: {type(e).__name__}: {e}")
@@ -159,12 +159,21 @@ def parse_ai_response(text: str, topic: str) -> dict | None:
             text = re.sub(r'```json?\s*', '', text)
             text = re.sub(r'```', '', text)
         
-        # Extract JSON
-        json_match = re.search(r'\{[\s\S]*\}', text)
-        if json_match:
-            text = json_match.group()
+        # Extract JSON with improved regex to handle multiple braces or extra text
+        # Finds the first '{' and the last '}'
+        start_idx = text.find('{')
+        end_idx = text.rfind('}')
         
-        data = json.loads(text)
+        if start_idx != -1 and end_idx != -1:
+            text = text[start_idx:end_idx+1]
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError:
+            # Fallback: try to clean common issues like trailing commas
+            text = re.sub(r',\s*}', '}', text)
+            text = re.sub(r',\s*]', ']', text)
+            data = json.loads(text)
         
         # Parse Story
         story_data = data.get("story", {})
