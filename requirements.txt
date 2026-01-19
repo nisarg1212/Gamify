@@ -7,3 +7,5 @@ pydantic
 jinja2
 sqlalchemy
 gunicorn
+openai
+httpx
