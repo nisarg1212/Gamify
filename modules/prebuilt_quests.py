@@ -442,7 +442,7 @@ The universe's darkest secrets lay before them, waiting to be understood.""",
                 Clue(id=3, description="The object is located at the center of our Milky Way galaxy", is_key_clue=True)
             ],
             question="What is the star orbiting?\n\nA. Sagittarius A* (supermassive black hole)\nB. A dark matter cloud\nC. An invisible neutron star\nD. A brown dwarf",
-            correct_answer="Sagittarius A* (supermassive black hole)",
+            correct_answer="A. Sagittarius A* (supermassive black hole)",
             explanation="You solved it! This describes the star S2 orbiting Sagittarius A*, the supermassive black hole at our galaxy's center. This discovery helped prove Einstein's theories!",
             xp_reward=100
         )
@@ -772,7 +772,7 @@ Maya smiled at the skull. "We've discovered over 1,000 dinosaur species, and sci
                 Clue(id=3, description="Modern birds are theropod descendants", is_key_clue=True)
             ],
             question="What does this fossil prove?\n\nA. Many dinosaurs had feathers, including T. rex relatives\nB. Birds evolved before dinosaurs\nC. All dinosaurs could fly\nD. Dinosaurs were warm-blooded mammals",
-            correct_answer="Many dinosaurs had feathers, including T. rex relatives",
+            correct_answer="A. Many dinosaurs had feathers, including T. rex relatives",
             explanation="Brilliant deduction! Fossilized feathers prove many theropods had feathers. Even T. rex may have had feathers as a juvenile! This links dinosaurs directly to modern birds.",
             xp_reward=100
         )
@@ -1100,7 +1100,7 @@ Today, scientists can read, edit, and even write DNA. The CRISPR technology lets
                 Clue(id=3, description="Environment also plays a role but DNA provides the blueprint", is_key_clue=True)
             ],
             question="What explains their remarkable similarities?\n\nA. Genes strongly influence personality and preferences\nB. It's pure coincidence\nC. They secretly communicated\nD. Environment determines everything",
-            correct_answer="Genes strongly influence personality and preferences",
+            correct_answer="A. Genes strongly influence personality and preferences",
             explanation="Excellent deduction! Twin studies prove that DNA significantly influences personality, interests, and even the types of people we're attracted to. While environment matters, our genes provide a powerful blueprint!",
             xp_reward=100
         )
@@ -1429,7 +1429,7 @@ Today, AI helps doctors diagnose diseases, translates languages instantly, and e
                 Clue(id=3, description="The AI found patterns that correlated with past hiring decisions", is_key_clue=True)
             ],
             question="Why is the AI showing bias?\n\nA. It learned historical bias from the training data\nB. Someone programmed it to be biased\nC. AI is naturally unfair\nD. The algorithm is broken",
-            correct_answer="It learned historical bias from the training data",
+            correct_answer="A. It learned historical bias from the training data",
             explanation="Brilliant analysis! This is a real case (Amazon, 2018). ML models learn from data—if historical data contains bias, the AI learns that bias. This is why diverse, clean training data and bias testing are crucial in AI development!",
             xp_reward=100
         )
@@ -1723,36 +1723,42 @@ def is_featured_quest(topic: str) -> tuple[str, int] | None:
     """Check if a topic matches a featured quest, return (quest_id, level) if match"""
     topic_lower = topic.lower().strip()
     
-    # Extract level if present (e.g., "(Level 2 - Advanced)")
+    # Extract level if present (e.g., "Level 2", "(Level 2)", "lvl 2")
     level = 1
     import re
-    level_match = re.search(r"\(level\s+(\d+)", topic_lower)
+    # Matches "level 2", "lvl 2", with or without parens
+    level_match = re.search(r"\(?(?:level|lvl)\s+(\d+)\)?", topic_lower)
     if level_match:
         level = int(level_match.group(1))
     
-    # Base topic matching
-    base_topic = topic_lower.split("(")[0].strip()
+    # Base topic matching - Remove level info
+    base_topic = re.sub(r"\(?(?:level|lvl)\s+(\d+)\)?", "", topic_lower).strip(" -()")
+
+    # Helper to check if topic starts with or exactly matches a keyword
+    def matches_keyword(keyword, text):
+        return text == keyword or text.startswith(keyword + " ")
     
     # Python matches
-    if "python" in base_topic:
+    if matches_keyword("python", base_topic):
         return ("python", level)
     
     # Black Holes matches
-    if "black hole" in base_topic or "blackhole" in base_topic:
+    if matches_keyword("black hole", base_topic) or matches_keyword("black holes", base_topic) or matches_keyword("blackhole", base_topic):
         return ("black_holes", level)
     
     # Dinosaurs matches
-    if "dinosaur" in base_topic or "dino" in base_topic:
+    if matches_keyword("dinosaur", base_topic) or matches_keyword("dinosaurs", base_topic) or matches_keyword("dino", base_topic):
         return ("dinosaurs", level)
     
     # DNA matches
-    if "dna" in base_topic or "genetic" in base_topic:
+    if matches_keyword("dna", base_topic) or matches_keyword("genetics", base_topic) or matches_keyword("genetic", base_topic):
         return ("dna", level)
     
     # AI matches
-    if "artificial intelligence" in base_topic or "machine learning" in base_topic or "introduction to ai" in base_topic:
-        return ("ai", level)
-    if base_topic in ["ai", "ml"]:
+    if matches_keyword("ai", base_topic) or matches_keyword("ml", base_topic) or \
+       matches_keyword("artificial intelligence", base_topic) or \
+       matches_keyword("machine learning", base_topic) or \
+       "introduction to ai" in base_topic:
         return ("ai", level)
     
     return None
