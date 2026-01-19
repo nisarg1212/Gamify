@@ -140,9 +140,12 @@ Return ONLY valid JSON in this exact format:
             print(f"[AI] Model {model} failed: {type(e).__name__}: {e}")
             continue
     
-    # All models failed, return error
+    # All models failed, return friendly error
     print(f"[AI] All models failed for: {topic}")
-    return generate_smart_fallback(topic)
+    return {
+        "error": True,
+        "message": "AI generation unavailable. Please try one of our Featured Quests instead! 🎮"
+    }
 
 
 
