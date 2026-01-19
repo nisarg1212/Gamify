@@ -5,3 +5,5 @@ google-generativeai
 python-multipart
 pydantic
 jinja2
+sqlalchemy
+gunicorn

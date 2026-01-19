@@ -28,13 +28,14 @@ def generate_all_content(topic: str) -> dict:
     """Generate all learning content - uses pre-built quests or AI with fallback"""
     
     # Check if this matches a featured quest
-    quest_id = is_featured_quest(topic)
-    if quest_id:
-        print(f"[HYBRID] Using pre-built quest: {quest_id}")
-        quest = get_featured_quest(quest_id)
+    featured_match = is_featured_quest(topic)
+    if featured_match:
+        quest_id, level = featured_match
+        print(f"[HYBRID] Using pre-built quest: {quest_id} (Level {level})")
+        quest = get_featured_quest(quest_id, level)
         return {
             "success": True,
-            "source": "prebuilt",
+            "source": f"prebuilt (Level {level})",
             "story": quest["story"],
             "quiz": quest["quiz"],
             "master": quest["master"],

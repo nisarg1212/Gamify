@@ -38,6 +38,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// Activate a progress step in the sidebar
+function activateStep(stepName) {
+    // Remove all active classes
+    document.querySelectorAll('.progress-step-v').forEach(step => {
+        step.classList.remove('active');
+    });
+
+    // Add active class to current step
+    const currentStep = document.getElementById(`step-${stepName}`);
+    if (currentStep) {
+        currentStep.classList.add('active');
+    }
+
+    // Mark previous steps as completed
+    const stepOrder = ['story', 'quiz', 'master', 'detective'];
+    const currentIndex = stepOrder.indexOf(stepName);
+    stepOrder.forEach((step, index) => {
+        if (index < currentIndex) {
+            const stepEl = document.getElementById(`step-${step}`);
+            if (stepEl) stepEl.classList.add('completed');
+        }
+    });
+}
+
 // ==================== API Calls ====================
 
 async function loadFeaturedQuests() {
@@ -648,16 +672,17 @@ async function startNextLevel() {
     if (!currentSession || currentLevel >= maxLevel) return;
 
     currentLevel++;
-    const topic = currentSession.topic;
+    // Strip any existing level info from topic before adding new level
+    let baseTopic = currentSession.topic.split('(')[0].trim();
 
     showLoading(`Loading Level ${currentLevel}...`);
 
     try {
-        // Start new session at next level (AI generates harder content)
+        // Start new session at next level
         const response = await fetch('/api/session/start', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic: `${topic} (Level ${currentLevel} - Advanced)` })
+            body: JSON.stringify({ topic: `${baseTopic} (Level ${currentLevel} - Advanced)` })
         });
 
         const data = await response.json();
@@ -670,7 +695,7 @@ async function startNextLevel() {
 
         currentSession = {
             id: data.session_id,
-            topic: topic,
+            topic: baseTopic,
             aiGenerated: data.ai_generated,
             source: data.source
         };
@@ -679,15 +704,35 @@ async function startNextLevel() {
         selectedQuizAnswers = [];
         selectedMasterAnswers = [];
 
+        // Hide the level complete modal first
+        const modal = document.getElementById('level-complete-modal');
+        if (modal) modal.style.display = 'none';
+
         // Show story for new level
         document.getElementById('story-title').textContent = data.story.title;
         document.getElementById('story-content').innerHTML = formatStoryContent(data.story.content);
 
-        // Reset all sections
+        // Reset all sections - hide all mode sections
         document.querySelectorAll('.mode-section').forEach(section => {
             section.style.display = 'none';
         });
-        document.getElementById('story-section').style.display = 'block';
+
+        // Show story section (the container, not story-mode)
+        const storySection = document.getElementById('story-section') || document.getElementById('story-mode');
+        if (storySection) storySection.style.display = 'block';
+
+        // Reset all result displays (hide old results from previous level)
+        document.getElementById('quiz-results').style.display = 'none';
+        document.getElementById('master-results').style.display = 'none';
+        document.getElementById('detective-results').style.display = 'none';
+
+        // Restore all submit buttons
+        document.getElementById('submit-quiz-btn').style.display = 'block';
+        document.getElementById('submit-master-btn').style.display = 'block';
+        document.getElementById('solve-case-btn').style.display = 'block';
+
+        // Clear detective answer input
+        document.getElementById('detective-answer').value = '';
 
         // Reset progress steps
         document.querySelectorAll('.progress-step-v').forEach(step => {
@@ -702,7 +747,7 @@ async function startNextLevel() {
 
     } catch (error) {
         hideLoading();
-        alert('Error loading next level. Please try again!');
-        console.error(error);
+        console.error('Level loading error:', error);
+        alert('Error loading next level: ' + error.message);
     }
 }
