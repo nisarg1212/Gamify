@@ -107,12 +107,26 @@ def solve_case(case: DetectiveCase, answer: str) -> dict:
     answer_lower = answer.strip().lower()
     correct_lower = case.correct_answer.strip().lower()
     
-    is_correct = (
-        answer_lower == correct_lower or
-        answer_lower in correct_lower or
-        correct_lower in answer_lower or
-        (len(answer_lower) >= 1 and len(correct_lower) >= 1 and answer_lower[0] == correct_lower[0])
-    )
+    # Logic for single letter answers (e.g. "A", "B")
+    if len(answer_lower) == 1:
+        # Check if the correct answer starts with "a.", "a)", "a " or is just "a"
+        # Example correct: "A. Sagittarius A*..."
+        is_correct = (
+            correct_lower == answer_lower or
+            correct_lower.startswith(f"{answer_lower}.") or
+            correct_lower.startswith(f"{answer_lower})") or
+            correct_lower.startswith(f"{answer_lower} ")
+        )
+    else:
+        # Logic for full text answers
+        is_correct = (
+            answer_lower == correct_lower or
+            # Require significant overlap (at least 5 chars) to prevent "c" matching "black"
+            (len(answer_lower) > 4 and answer_lower in correct_lower) or
+            # Use 'in' check with length constraint to avoid "c" matching "black holes"
+            # But allow "Sagittarius" (11 chars) to match "Sagittarius A*"
+            (len(correct_lower) > 4 and correct_lower in answer_lower)
+        )
     
     return {
         "solved": is_correct,
